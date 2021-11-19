@@ -13,12 +13,20 @@
 set -e
 export LC_ALL=C
 
+git_remote_url() {
+    if [ -n "$GIT_AUTH_USER" ] && [[ "$GIT_REMOTE_URL" =~ ^(https?://)(.*)$ ]]; then
+        echo "${BASH_REMATCH[1]}$GIT_AUTH_USER:$GIT_AUTH_PASS@${BASH_REMATCH[2]}"
+    else
+        echo "$GIT_REMOTE_URL"
+    fi
+}
+
 git_ls_branches() {
-    git ls-remote "$GIT_REMOTE_URL" "refs/heads/$1" | cut -f 2
+    git ls-remote "$(git_remote_url)" "refs/heads/$1" | cut -f 2
 }
 
 git_ls_tags() {
-    git ls-remote "$GIT_REMOTE_URL" "refs/tags/$1" | cut -f 2 | sort_semver
+    git ls-remote "$(git_remote_url)" "refs/tags/$1" | cut -f 2 | sort_semver
 }
 
 sort_semver() {
