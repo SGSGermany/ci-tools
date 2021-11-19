@@ -26,7 +26,7 @@ fi
 echo + "podman image exists $IMAGE" >&2
 if ! podman image exists "$IMAGE"; then
     echo + "podman pull $REGISTRY/$IMAGE" >&2
-    podman pull "$REGISTRY/$IMAGE"
+    podman pull "$REGISTRY/$IMAGE" >&2
 fi
 
 echo + "podman image inspect $IMAGE" >&2

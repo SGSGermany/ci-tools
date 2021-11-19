@@ -81,7 +81,7 @@ IGNORE_TAGS=()
 for TAG_PATTERN in $RUN_ON_TAGS_IGNORE; do
     while IFS= read -r TAG; do
         IGNORE_TAGS+=( "$TAG" )
-    done < <(git_ls_tags "$GIT_REMOTE_URL" "$TAG_PATTERN")
+    done < <(git_ls_tags "$TAG_PATTERN")
 done
 
 if [ ${#TAGS[@]} -gt 0 ]; then
