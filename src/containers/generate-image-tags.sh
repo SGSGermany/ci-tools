@@ -14,7 +14,7 @@ set -e
 export LC_ALL=C
 
 git_ls_tags() {
-    git ls-remote "$GIT_REMOTE_URL" "refs/tags/$1" | cut -f 2 | sort_semver
+    git ls-remote "origin" "refs/tags/$1" | cut -f 2 | sort_semver
 }
 
 sort_semver() {
@@ -29,10 +29,6 @@ fi
 if ! git rev-parse --git-dir > /dev/null 2>&1; then
     echo "Invalid build environment: This is no Git repository" >&2
     exit 1
-fi
-
-if [ -z "$GIT_REMOTE_URL" ]; then
-    GIT_REMOTE_URL="$(git remote get-url origin)"
 fi
 
 IMAGE_TAG_DATE="$(date -u +'%Y%m%d%H%M')"
