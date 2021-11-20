@@ -36,26 +36,22 @@ if [ -z "$IMAGE_ID" ]; then
     exit
 fi
 
-# pull latest base image
+# compare base image digests
 echo + "BASE_IMAGE=\"\$(podman image inspect --format '{{index .Annotations \"org.opencontainers.image.base.name\"}}' $IMAGE_ID)\"" >&2
 BASE_IMAGE="$(podman image inspect --format '{{index .Annotations "org.opencontainers.image.base.name"}}' "$IMAGE_ID")"
 
-echo + "BASE_IMAGE_ID=\"\$(podman pull $BASE_IMAGE)\"" >&2
-BASE_IMAGE_ID="$(podman pull "$BASE_IMAGE" || true)"
+echo + "BASE_IMAGE_DIGEST=\"\$(podman image inspect --format '{{index .Annotations \"org.opencontainers.image.base.digest\"}}' $IMAGE_ID)\"" >&2
+BASE_IMAGE_DIGEST="$(podman image inspect --format '{{index .Annotations "org.opencontainers.image.base.digest"}}' "$IMAGE_ID")"
 
-if [ -z "$BASE_IMAGE_ID" ]; then
-    echo "Failed to pull base image '$BASE_IMAGE': No image with this tag found" >&2
+echo + "LATEST_BASE_IMAGE_DIGEST=\"\$(skopeo inspect --format '{{.Digest}}' docker://$BASE_IMAGE)\"" >&2
+LATEST_BASE_IMAGE_DIGEST="$(skopeo inspect --format '{{.Digest}}' "docker://$BASE_IMAGE" || true)"
+
+if [ -z "$LATEST_BASE_IMAGE_DIGEST" ]; then
+    echo "Failed to inspect latest base image '$BASE_IMAGE': \`skopeo inspect\` failed, likely there was no image with this tag found" >&2
     echo "Image rebuild required" >&2
     echo "build"
     exit
 fi
-
-# compare digests
-echo + "BASE_IMAGE_DIGEST=\"\$(podman image inspect --format '{{index .Annotations \"org.opencontainers.image.base.digest\"}}' $IMAGE_ID)\"" >&2
-BASE_IMAGE_DIGEST="$(podman image inspect --format '{{index .Annotations "org.opencontainers.image.base.digest"}}' "$IMAGE_ID")"
-
-echo + "LATEST_BASE_IMAGE_DIGEST=\"\$(podman image inspect --format {{.Digest}} $BASE_IMAGE_ID)\"" >&2
-LATEST_BASE_IMAGE_DIGEST="$(podman image inspect --format '{{.Digest}}' "$BASE_IMAGE_ID")"
 
 if [ -z "$BASE_IMAGE_DIGEST" ] || [ "$BASE_IMAGE_DIGEST" != "$LATEST_BASE_IMAGE_DIGEST" ]; then
     echo "Base image digest mismatch, the image's base image '$BASE_IMAGE' is out of date" >&2
@@ -73,7 +69,7 @@ if [ -n "$SOURCE_TAG" ]; then
 
     if [ -z "$IMAGE_ID" ]; then
         echo "Failed to pull image '$REGISTRY/$OWNER/$IMAGE:${TAGS[0]}': No image with this tag found" >&2
-        echo "Image rebuild required" >&2
+        echo "Image must be retagged" >&2
         echo "tag"
         exit
     fi
