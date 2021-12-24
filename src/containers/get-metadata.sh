@@ -10,18 +10,14 @@
 # SPDX-License-Identifier: MIT
 # License-Filename: LICENSE
 
-set -e
+set -eu -o pipefail
 export LC_ALL=C
 
-REGISTRY="$1"
-IMAGE="$2"
-if [ -z "$REGISTRY" ]; then
-    echo "No container registry given" >&2
-    exit 1
-elif [ -z "$IMAGE" ]; then
-    echo "No container image given" >&2
-    exit 1
-fi
+REGISTRY="${1:-}"
+[ -n "$REGISTRY" ] || { echo "No container registry given" >&2; exit 1; }
+
+IMAGE="${2:-}"
+[ -n "$IMAGE" ] || { echo "No container image given" >&2; exit 1; }
 
 echo + "podman image exists $IMAGE" >&2
 if ! podman image exists "$IMAGE"; then

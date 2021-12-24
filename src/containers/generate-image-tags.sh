@@ -10,7 +10,7 @@
 # SPDX-License-Identifier: MIT
 # License-Filename: LICENSE
 
-set -e
+set -eu -o pipefail
 export LC_ALL=C
 
 git_ls_tags() {
@@ -21,7 +21,7 @@ sort_semver() {
     sed '/-/!{s/$/_/}' | sort -V -r | sed 's/_$//'
 }
 
-GIT_REF="$1"
+GIT_REF="${1:-}"
 if [ -z "$GIT_REF" ]; then
     echo "Missing required parameter 'GIT_REF'" >&2
     exit 1

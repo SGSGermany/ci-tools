@@ -10,18 +10,18 @@
 # SPDX-License-Identifier: MIT
 # License-Filename: LICENSE
 
-set -e
+set -eu -o pipefail
 export LC_ALL=C
 
-[ -n "$REGISTRY" ] || { echo "Invalid build environment: Missing required env variable 'REGISTRY'" >&2; exit 1; }
-[ -n "$OWNER" ] || { echo "Invalid build environment: Missing required env variable 'OWNER'" >&2; exit 1; }
-[ -n "$IMAGE" ] || { echo "Invalid build environment: Missing required env variable 'IMAGE'" >&2; exit 1; }
-[ -n "$TAGS" ] || { echo "Invalid build environment: Missing required env variable 'TAGS'" >&2; exit 1; }
+[ -n "${REGISTRY:-}" ] || { echo "Invalid build environment: Missing required env variable 'REGISTRY'" >&2; exit 1; }
+[ -n "${OWNER:-}" ] || { echo "Invalid build environment: Missing required env variable 'OWNER'" >&2; exit 1; }
+[ -n "${IMAGE:-}" ] || { echo "Invalid build environment: Missing required env variable 'IMAGE'" >&2; exit 1; }
+[ -n "${TAGS:-}" ] || { echo "Invalid build environment: Missing required env variable 'TAGS'" >&2; exit 1; }
 
 readarray -t -d' ' TAGS < <(printf '%s' "$TAGS")
 
 SOURCE_TAG=""
-if [ "$1" != "${TAGS[0]}" ]; then
+if [ -n "${1:-}" ] && [ "$1" != "${TAGS[0]}" ]; then
     SOURCE_TAG="$1"
 fi
 

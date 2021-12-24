@@ -10,11 +10,11 @@
 # SPDX-License-Identifier: MIT
 # License-Filename: LICENSE
 
-set -e
+set -eu -o pipefail
 export LC_ALL=C
 
 git_remote_url() {
-    if [ -n "$GIT_AUTH_USER" ] && [[ "$GIT_REMOTE_URL" =~ ^(https?://)(.*)$ ]]; then
+    if [ -n "${GIT_AUTH_USER:-}" ] && [[ "$GIT_REMOTE_URL" =~ ^(https?://)(.*)$ ]]; then
         echo "${BASH_REMATCH[1]}$GIT_AUTH_USER:$GIT_AUTH_PASS@${BASH_REMATCH[2]}"
     else
         echo "$GIT_REMOTE_URL"
@@ -33,21 +33,21 @@ sort_semver() {
     sed '/-/!{s/$/_/}' | sort -V -r "$@" | sed 's/_$//'
 }
 
-if [ -z "$GIT_REMOTE_URL" ]; then
+if [ -z "${GIT_REMOTE_URL:-}" ]; then
     echo "Invalid build environment: Missing required env variable 'GIT_REMOTE_URL'" >&2
     exit 1
 fi
 
 # run on branches
 BRANCHES=()
-for BRANCH_PATTERN in $RUN_ON_BRANCHES; do
+for BRANCH_PATTERN in ${RUN_ON_BRANCHES:-}; do
     while IFS= read -r BRANCH; do
         BRANCHES+=( "$BRANCH" )
     done < <(git_ls_branches "$BRANCH_PATTERN")
 done
 
 IGNORE_BRANCHES=()
-for BRANCH_PATTERN in $RUN_ON_BRANCHES_IGNORE; do
+for BRANCH_PATTERN in ${RUN_ON_BRANCHES_IGNORE:-}; do
     while IFS= read -r BRANCH; do
         IGNORE_BRANCHES+=( "$BRANCH" )
     done < <(git_ls_branches "$BRANCH_PATTERN")
@@ -66,19 +66,19 @@ fi
 
 # run on tags
 TAGS=()
-for TAG_PATTERN in $RUN_ON_TAGS; do
+for TAG_PATTERN in ${RUN_ON_TAGS:-}; do
     while IFS= read -r TAG; do
         TAGS+=( "$TAG" )
     done < <(git_ls_tags "$TAG_PATTERN")
 done
 
-for TAG_PATTERN in $RUN_ON_TAGS_LATEST; do
+for TAG_PATTERN in ${RUN_ON_TAGS_LATEST:-}; do
     TAG="$(git_ls_tags "$TAG_PATTERN" | head -n 1)"
     [ -z "$TAG" ] || TAGS+=( "$TAG" )
 done
 
 IGNORE_TAGS=()
-for TAG_PATTERN in $RUN_ON_TAGS_IGNORE; do
+for TAG_PATTERN in ${RUN_ON_TAGS_IGNORE:-}; do
     while IFS= read -r TAG; do
         IGNORE_TAGS+=( "$TAG" )
     done < <(git_ls_tags "$TAG_PATTERN")
