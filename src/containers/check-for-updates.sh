@@ -71,18 +71,33 @@ fi
 
 # also check generic tag
 if [ -n "$SOURCE_TAG" ]; then
-    echo + "IMAGE_ID=\"\$(podman pull $REGISTRY/$OWNER/$IMAGE:${TAGS[0]})\"" >&2
-    IMAGE_ID="$(podman pull "$REGISTRY/$OWNER/$IMAGE:${TAGS[0]}" || true)"
+    echo + "GENERIC_IMAGE_ID=\"\$(podman pull $REGISTRY/$OWNER/$IMAGE:${TAGS[0]})\"" >&2
+    GENERIC_IMAGE_ID="$(podman pull "$REGISTRY/$OWNER/$IMAGE:${TAGS[0]}" || true)"
 
-    if [ -z "$IMAGE_ID" ]; then
+    if [ -z "$GENERIC_IMAGE_ID" ]; then
         echo "Failed to pull image '$REGISTRY/$OWNER/$IMAGE:${TAGS[0]}': No image with this tag found" >&2
         echo "Image must be retagged" >&2
         echo "tag"
         exit
     fi
 
-    echo + "BASE_IMAGE_DIGEST=\"\$(podman image inspect --format '{{index .Annotations \"org.opencontainers.image.base.digest\"}}' $IMAGE_ID)\"" >&2
-    BASE_IMAGE_DIGEST="$(podman image inspect --format '{{index .Annotations "org.opencontainers.image.base.digest"}}' "$IMAGE_ID" || true)"
+    echo + "IMAGE_DIGEST=\"\$(podman image inspect --format '{{.Digest}}' $IMAGE_ID)\"" >&2
+    IMAGE_DIGEST="$(podman image inspect --format '{{.Digest}}' "$IMAGE_ID")"
+
+    echo + "GENERIC_IMAGE_DIGEST=\"\$(podman image inspect --format '{{.Digest}}' $GENERIC_IMAGE_ID)\"" >&2
+    GENERIC_IMAGE_DIGEST="$(podman image inspect --format '{{.Digest}}' "$GENERIC_IMAGE_ID")"
+
+    if [ "$IMAGE_DIGEST" != "$GENERIC_IMAGE_DIGEST" ]; then
+        echo "Image digest mismatch, the generic tag '${TAGS[0]}' references a different image than '$SOURCE_TAG'" >&2
+        echo "Source image digest: $IMAGE_DIGEST" >&2
+        echo "Generic image digest: $GENERIC_IMAGE_DIGEST" >&2
+        echo "Image must be retagged" >&2
+        echo "tag"
+        exit
+    fi
+
+    echo + "BASE_IMAGE_DIGEST=\"\$(podman image inspect --format '{{index .Annotations \"org.opencontainers.image.base.digest\"}}' $GENERIC_IMAGE_ID)\"" >&2
+    BASE_IMAGE_DIGEST="$(podman image inspect --format '{{index .Annotations "org.opencontainers.image.base.digest"}}' "$GENERIC_IMAGE_ID" || true)"
 
     if [ -z "$BASE_IMAGE_DIGEST" ] || [ "$BASE_IMAGE_DIGEST" != "$LATEST_BASE_IMAGE_DIGEST" ]; then
         echo "Base image digest mismatch, the image's base image '$BASE_IMAGE' is out of date" >&2
