@@ -30,3 +30,11 @@ echo "Using CI tools as of commit $COMMIT_SHA from $COMMIT_DATE" >&2
 
 echo "Setting 'CI_TOOLS_PATH' environment variable: $GIT_DIR/src" >&2
 printf 'export %s="%s"' "CI_TOOLS_PATH" "$GIT_DIR/src"
+
+if [ "${GITHUB_ACTIONS:-false}" == "true" ]; then
+    echo "Switching to containers storage driver 'vfs'..." >&2
+    [ -e "${XDG_CONFIG_HOME:-$HOME/.config}/containers" ] \
+        || mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/containers"
+    printf '[storage]\ndriver = "%s"\n' "vfs" \
+        > "${XDG_CONFIG_HOME:-$HOME/.config}/containers/storage.conf"
+fi
