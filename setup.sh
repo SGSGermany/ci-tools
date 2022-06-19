@@ -28,8 +28,11 @@ COMMIT_SHA="$(git -C "$GIT_DIR" show -s --format=%h HEAD)"
 COMMIT_DATE="$(git -C "$GIT_DIR" show -s --format=%ci HEAD)"
 echo "Using CI tools as of commit $COMMIT_SHA from $COMMIT_DATE" >&2
 
+echo "Setting 'CI_TOOLS' environment variable: SGSGermany" >&2
+printf 'export %s="%s"\n' "CI_TOOLS" "SGSGermany"
+
 echo "Setting 'CI_TOOLS_PATH' environment variable: $GIT_DIR/src" >&2
-printf 'export %s="%s"' "CI_TOOLS_PATH" "$GIT_DIR/src"
+printf 'export %s="%s"\n' "CI_TOOLS_PATH" "$GIT_DIR/src"
 
 if [ "${GITHUB_ACTIONS:-false}" == "true" ]; then
     echo "Switching to containers storage driver 'vfs'..." >&2
