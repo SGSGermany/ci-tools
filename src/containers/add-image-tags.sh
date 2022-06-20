@@ -13,6 +13,12 @@
 set -eu -o pipefail
 export LC_ALL=C
 
+[ -v CI_TOOLS ] && [ "$CI_TOOLS" == "SGSGermany" ] \
+    || { echo "Invalid build environment: Environment variable 'CI_TOOLS' not set or invalid" >&2; exit 1; }
+
+[ -v CI_TOOLS_PATH ] && [ -d "$CI_TOOLS_PATH" ] \
+    || { echo "Invalid build environment: Environment variable 'CI_TOOLS_PATH' not set or invalid" >&2; exit 1; }
+
 [ -n "${REGISTRY:-}" ] || { echo "Invalid build environment: Missing required env variable 'REGISTRY'" >&2; exit 1; }
 [ -n "${OWNER:-}" ] || { echo "Invalid build environment: Missing required env variable 'OWNER'" >&2; exit 1; }
 [ -n "${IMAGE:-}" ] || { echo "Invalid build environment: Missing required env variable 'IMAGE'" >&2; exit 1; }
@@ -26,13 +32,13 @@ if [ -z "$SOURCE_TAG" ]; then
     exit 1
 fi
 
-echo + "podman image exists $IMAGE:$SOURCE_TAG"
+echo + "podman image exists $IMAGE:$SOURCE_TAG" >&2
 if ! podman image exists "$IMAGE:$SOURCE_TAG"; then
     echo "Invalid image '$IMAGE:$SOURCE_TAG': No image with this tag found" >&2
     exit 1
 fi
 
 for TAG in "${TAGS[@]}"; do
-    echo + "podman tag $IMAGE:$SOURCE_TAG $IMAGE:$TAG"
+    echo + "podman tag $IMAGE:$SOURCE_TAG $IMAGE:$TAG" >&2
     podman tag "$IMAGE:$SOURCE_TAG" "$IMAGE:$TAG"
 done
