@@ -10,23 +10,30 @@
 # SPDX-License-Identifier: MIT
 # License-Filename: LICENSE
 
-set -e
+set -eu -o pipefail
 export LC_ALL=C
 
 GITHUB_SERVER_URL="https://github.com"
 REPOSITORY="SGSGermany/ci-tools"
 
-GIT_DIR="$1"
-if [ -z "$GIT_DIR" ]; then
-    GIT_DIR="$(mktemp -d)"
-fi
+GIT_DIR="${1:-}"
+[ -n "$GIT_DIR" ] || GIT_DIR="$(mktemp -d)"
 
-echo "Cloning 'ci-tools' repository from '$GITHUB_SERVER_URL/$REPOSITORY.git'..." >&2
-git clone --depth=1 "$GITHUB_SERVER_URL/$REPOSITORY.git" "$GIT_DIR" >&2
+GIT_REF="${2:-}"
+[ -n "$GIT_REF" ] || GIT_REF="refs/heads/main"
 
-COMMIT_SHA="$(git -C "$GIT_DIR" show -s --format=%h HEAD)"
-COMMIT_DATE="$(git -C "$GIT_DIR" show -s --format=%ci HEAD)"
-echo "Using CI tools as of commit $COMMIT_SHA from $COMMIT_DATE" >&2
+echo "Preparing 'ci-tools' repository..." >&2
+[ -d "$GIT_DIR" ] || mkdir "$GIT_DIR"
+cd "$GIT_DIR"
+git init >&2
+git remote add "origin" "$GITHUB_SERVER_URL/$REPOSITORY.git" >&2
+
+echo "Fetching '$GIT_REF' from '$GITHUB_SERVER_URL/$REPOSITORY.git'..." >&2
+[[ "$GIT_REF" != refs/* ]] || GIT_REF="$(git ls-remote --refs origin "$GIT_REF" | tail -n1 | cut -f1)"
+git fetch --depth 1 origin "$GIT_REF" >&2
+
+echo "Checking out commit $GIT_REF from $(git show -s --format=%ci FETCH_HEAD)..." >&2
+git checkout --detach "$GIT_REF" >&2
 
 echo "Setting 'CI_TOOLS' environment variable: SGSGermany" >&2
 printf 'export %s="%s"\n' "CI_TOOLS" "SGSGermany"
