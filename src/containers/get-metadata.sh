@@ -13,11 +13,23 @@
 set -eu -o pipefail
 export LC_ALL=C
 
+[ -v CI_TOOLS ] && [ "$CI_TOOLS" == "SGSGermany" ] \
+    || { echo "Invalid build environment: Environment variable 'CI_TOOLS' not set or invalid" >&2; exit 1; }
+
+[ -v CI_TOOLS_PATH ] && [ -d "$CI_TOOLS_PATH" ] \
+    || { echo "Invalid build environment: Environment variable 'CI_TOOLS_PATH' not set or invalid" >&2; exit 1; }
+
 REGISTRY="${1:-}"
-[ -n "$REGISTRY" ] || { echo "No container registry given" >&2; exit 1; }
+if [ -z "$REGISTRY" ]; then
+    echo "Missing required parameter 'REGISTRY'" >&2
+    exit 1
+fi
 
 IMAGE="${2:-}"
-[ -n "$IMAGE" ] || { echo "No container image given" >&2; exit 1; }
+if [ -z "$IMAGE" ]; then
+    echo "Missing required parameter 'IMAGE'" >&2
+    exit 1
+fi
 
 echo + "podman image exists $IMAGE" >&2
 if ! podman image exists "$IMAGE"; then
