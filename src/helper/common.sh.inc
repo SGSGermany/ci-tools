@@ -35,3 +35,7 @@ trunc() {
         fi
     done
 }
+
+sort_semver() {
+    sed '/-/!{s/$/_/}' | sort -V -r | sed 's/_$//'
+}
