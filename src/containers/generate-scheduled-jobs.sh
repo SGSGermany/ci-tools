@@ -13,6 +13,17 @@
 set -eu -o pipefail
 export LC_ALL=C
 
+[ -v CI_TOOLS ] && [ "$CI_TOOLS" == "SGSGermany" ] \
+    || { echo "Invalid build environment: Environment variable 'CI_TOOLS' not set or invalid" >&2; exit 1; }
+
+[ -v CI_TOOLS_PATH ] && [ -d "$CI_TOOLS_PATH" ] \
+    || { echo "Invalid build environment: Environment variable 'CI_TOOLS_PATH' not set or invalid" >&2; exit 1; }
+
+source "$CI_TOOLS_PATH/helper/common.sh.inc"
+
+[ -v GIT_REMOTE_URL ] && [ -n "$GIT_REMOTE_URL" ] \
+    || { echo "Invalid build environment: Environment variable 'GIT_REMOTE_URL' not set or invalid" >&2; exit 1; }
+
 git_remote_url() {
     if [ -n "${GIT_AUTH_USER:-}" ] && [[ "$GIT_REMOTE_URL" =~ ^(https?://)(.*)$ ]]; then
         echo "${BASH_REMATCH[1]}$GIT_AUTH_USER:$GIT_AUTH_PASS@${BASH_REMATCH[2]}"
@@ -22,21 +33,12 @@ git_remote_url() {
 }
 
 git_ls_branches() {
-    git ls-remote "$(git_remote_url)" "refs/heads/$1" | cut -f 2
+    git ls-remote "$(git_remote_url)" "refs/heads/$1" | cut -f2
 }
 
 git_ls_tags() {
-    git ls-remote "$(git_remote_url)" "refs/tags/$1" | cut -f 2 | sort_semver
+    git ls-remote "$(git_remote_url)" "refs/tags/$1" | cut -f2 | sort_semver
 }
-
-sort_semver() {
-    sed '/-/!{s/$/_/}' | sort -V -r "$@" | sed 's/_$//'
-}
-
-if [ -z "${GIT_REMOTE_URL:-}" ]; then
-    echo "Invalid build environment: Missing required env variable 'GIT_REMOTE_URL'" >&2
-    exit 1
-fi
 
 # run on branches
 BRANCHES=()
