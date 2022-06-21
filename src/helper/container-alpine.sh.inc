@@ -45,8 +45,8 @@ pkg_version() {
     local PACKAGE="$2"
     local PACKAGE_ESCAPED=$(printf '%s\n' "$PACKAGE" | sed -e 's/[]\/$*.^[]/\\&/g');
 
-    echo + "VERSION=\"\$(buildah run $(quote "$CONTAINER") apk info $(quote "$PACKAGE") \\" >&2
-    echo + "    | sed -ne $(quote "1s/^$PACKAGE_ESCAPED-\([^ ]*\) .*$/\1/p"))\"" >&2
+    echo + "VERSION=\"\$(buildah run $(quote "$CONTAINER") -- apk info $(quote "$PACKAGE")" \
+        "| sed -ne $(quote "1s/^$PACKAGE_ESCAPED-\([^ ]*\) .*$/\1/p"))\"" >&2
     buildah run "$CONTAINER" -- \
         apk info "$PACKAGE" \
         | sed -ne "1s/^$PACKAGE_ESCAPED-\([^ ]*\) .*$/\1/p"
@@ -78,6 +78,13 @@ user_changeuid() {
     local OLD_GECOS="$(grep "^$NEW_USER_ESCAPED:" "$MOUNT/etc/passwd" | cut -d: -f5)"
     local OLD_HOME="$(grep "^$NEW_USER_ESCAPED:" "$MOUNT/etc/passwd" | cut -d: -f6)"
     local OLD_SHELL="$(grep "^$NEW_USER_ESCAPED:" "$MOUNT/etc/passwd" | cut -d: -f7)"
+
+    echo + "[ \"\$(sed -ne \"s/^\([^:]*\):[^:]*:\$OLD_GID:.*$/\1/p\" …/etc/group)\" == \"$NEW_USER\" ]" >&2
+    local OLD_GROUP="$(sed -ne "s/^\([^:]*\):[^:]*:$OLD_GID:.*$/\1/p" "$MOUNT/etc/group")"
+    if [ "$OLD_GROUP" != "$NEW_USER" ]; then
+        echo "Primary group of user '$NEW_USER' is not group '$NEW_USER', but group '$OLD_GROUP'" >&2
+        return 1
+    fi
 
     cmd buildah run "$CONTAINER" -- \
         deluser "$NEW_USER"
