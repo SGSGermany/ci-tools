@@ -23,7 +23,7 @@ chkupd_packages() {
         echo "Failed to pull base image '$BASE_IMAGE': No image with this tag found" >&2
         echo "Image rebuild required" >&2
         echo "build"
-        return
+        return 1
     fi
 
     trap_exit buildah rm "$BASE_CONTAINER"
@@ -55,7 +55,7 @@ chkupd_packages() {
         echo "Failed to pull image '$IMAGE': No image with this tag found" >&2
         echo "Image rebuild required" >&2
         echo "build"
-        return
+        return 1
     fi
 
     trap_exit buildah rm "$CONTAINER"
@@ -91,6 +91,6 @@ chkupd_packages() {
         printf '%s\n' "${PACKAGE_UPGRADES[@]}" >&2
         echo "Image rebuild required" >&2
         echo "build"
-        return
+        return 1
     fi
 }

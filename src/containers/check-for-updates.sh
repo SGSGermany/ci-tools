@@ -27,4 +27,5 @@ source "$CI_TOOLS_PATH/helper/chkupd.sh.inc"
 [ -n "${IMAGE:-}" ] || { echo "Invalid build environment: Missing required env variable 'IMAGE'" >&2; exit 1; }
 [ -n "${TAGS:-}" ] || { echo "Invalid build environment: Missing required env variable 'TAGS'" >&2; exit 1; }
 
-chkupd_baseimage "$REGISTRY/$OWNER/$IMAGE" "${TAGS%% *}" "${1:-}"
+chkupd_baseimage "$REGISTRY/$OWNER/$IMAGE" "${TAGS%% *}" "${1:-}" \
+    || exit 0

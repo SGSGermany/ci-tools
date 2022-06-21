@@ -24,7 +24,7 @@ chkupd_baseimage() {
         echo "Failed to pull image '$IMAGE:${SOURCE_TAG:-$GENERIC_TAG}': No image with this tag found" >&2
         echo "Image rebuild required" >&2
         echo "build"
-        return
+        return 1
     fi
 
     # compare base image digests
@@ -35,7 +35,7 @@ chkupd_baseimage() {
         echo "Failed to inspect image '$IMAGE:${SOURCE_TAG:-$GENERIC_TAG}': The image specifies no base image" >&2
         echo "Image rebuild required" >&2
         echo "build"
-        return
+        return 1
     fi
 
     echo + "BASE_IMAGE_DIGEST=\"\$(podman image inspect --format '{{index .Annotations \"org.opencontainers.image.base.digest\"}}' $IMAGE_ID)\"" >&2
@@ -48,7 +48,7 @@ chkupd_baseimage() {
         echo "Failed to inspect latest base image '$BASE_IMAGE': \`skopeo inspect\` failed, likely there was no image with this tag found" >&2
         echo "Image rebuild required" >&2
         echo "build"
-        return
+        return 1
     fi
 
     if [ -z "$BASE_IMAGE_DIGEST" ] || [ "$BASE_IMAGE_DIGEST" != "$LATEST_BASE_IMAGE_DIGEST" ]; then
@@ -57,7 +57,7 @@ chkupd_baseimage() {
         echo "Latest base image digest: $LATEST_BASE_IMAGE_DIGEST" >&2
         echo "Image rebuild required" >&2
         echo "build"
-        return
+        return 1
     fi
 
     # also check generic tag
@@ -69,7 +69,7 @@ chkupd_baseimage() {
             echo "Failed to pull image '$IMAGE:$GENERIC_TAG': No image with this tag found" >&2
             echo "Image must be retagged" >&2
             echo "tag"
-            return
+            return 1
         fi
 
         echo + "IMAGE_DIGEST=\"\$(podman image inspect --format '{{.Digest}}' $IMAGE_ID)\"" >&2
@@ -84,7 +84,7 @@ chkupd_baseimage() {
             echo "Generic image digest: $GENERIC_IMAGE_DIGEST" >&2
             echo "Image must be retagged" >&2
             echo "tag"
-            return
+            return 1
         fi
 
         echo + "BASE_IMAGE_DIGEST=\"\$(podman image inspect --format '{{index .Annotations \"org.opencontainers.image.base.digest\"}}' $GENERIC_IMAGE_ID)\"" >&2
@@ -96,7 +96,7 @@ chkupd_baseimage() {
             echo "Latest base image digest: $LATEST_BASE_IMAGE_DIGEST" >&2
             echo "Image must be retagged" >&2
             echo "tag"
-            return
+            return 1
         fi
     fi
 }
