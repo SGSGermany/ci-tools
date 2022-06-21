@@ -40,6 +40,18 @@ pkg_install() {
         apk add "$@"
 }
 
+pkg_version() {
+    local CONTAINER="$1"
+    local PACKAGE="$2"
+    local PACKAGE_ESCAPED=$(printf '%s\n' "$PACKAGE" | sed -e 's/[]\/$*.^[]/\\&/g');
+
+    echo + "VERSION=\"\$(buildah run $(quote "$CONTAINER") apk info $(quote "$PACKAGE") \\" >&2
+    echo + "    | sed -ne $(quote "1s/^$PACKAGE_ESCAPED-\([^ ]*\) .*$/\1/p"))\"" >&2
+    buildah run "$CONTAINER" -- \
+        apk info "$PACKAGE" \
+        | sed -ne "1s/^$PACKAGE_ESCAPED-\([^ ]*\) .*$/\1/p"
+}
+
 user_add() {
     local CONTAINER="$1"
 

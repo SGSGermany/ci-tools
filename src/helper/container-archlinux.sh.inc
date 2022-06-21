@@ -54,6 +54,17 @@ pkg_install() {
     fi
 }
 
+pkg_version() {
+    local CONTAINER="$1"
+    local PACKAGE="$2"
+
+    echo + "VERSION=\"\$(buildah run $(quote "$CONTAINER") pacman -Si $(quote "$PACKAGE") \\" >&2
+    echo + "    | sed -ne 's/^Version\s*: \(.*\)$/\1/p')\"" >&2
+    buildah run "$CONTAINER" -- \
+        pacman -Si "$PACKAGE" \
+        | sed -ne 's/^Version\s*: \(.*\)$/\1/p'
+}
+
 user_add() {
     local CONTAINER="$1"
 
