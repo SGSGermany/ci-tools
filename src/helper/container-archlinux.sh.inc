@@ -16,9 +16,8 @@ cleanup() {
     cmd buildah run "$CONTAINER" -- \
         pacman -Sc --noconfirm
 
-    echo + "trunc …/run …/tmp …/var/cache/pacman/pkg …/var/log/{lastlog,wtmp,btmp} …/var/log/pacman.log …/var/tmp" >&2
+    echo + "trunc …/tmp …/var/cache/pacman/pkg …/var/log/{lastlog,wtmp,btmp} …/var/log/pacman.log …/var/tmp" >&2
     trunc \
-        "$MOUNT/run" \
         "$MOUNT/tmp" \
         "$MOUNT/var/cache/pacman/pkg" \
         "$MOUNT/var/log/btmp" \

@@ -13,9 +13,8 @@ cleanup() {
     local CONTAINER="$1"
     local MOUNT="$(buildah mount "$CONTAINER")"
 
-    echo + "trunc …/run …/tmp …/var/cache/apk …/var/log/{lastlog,wtmp,btmp} …/var/tmp"
+    echo + "trunc …/tmp …/var/cache/apk …/var/log/{lastlog,wtmp,btmp} …/var/tmp"
     trunc \
-        "$MOUNT/run" \
         "$MOUNT/tmp" \
         "$MOUNT/var/cache/apk" \
         "$MOUNT/var/log/btmp" \

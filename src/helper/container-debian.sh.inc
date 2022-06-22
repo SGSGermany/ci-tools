@@ -16,9 +16,8 @@ cleanup() {
     cmd buildah run "$CONTAINER" -- \
         apt-get clean
 
-    echo + "trunc …/run …/tmp …/var/lib/apt/lists …/var/log/{lastlog,faillog,wtmp,btmp} …/var/tmp"
+    echo + "trunc …/tmp …/var/lib/apt/lists …/var/log/{lastlog,faillog,wtmp,btmp} …/var/tmp"
     trunc \
-        "$MOUNT/run" \
         "$MOUNT/tmp" \
         "$MOUNT/var/lib/apt/lists" \
         "$MOUNT/var/log/btmp" \
