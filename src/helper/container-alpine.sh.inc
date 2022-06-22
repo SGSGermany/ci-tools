@@ -34,7 +34,13 @@ cleanup() {
 
 pkg_install() {
     local CONTAINER="$1"
+    local MOUNT="$(buildah mount "$CONTAINER")"
     shift
+
+    if [ -n "$(find "$MOUNT/var/cache/apk" -mindepth 0 -maxdepth 0 -empty)" ]; then
+        cmd buildah run "$CONTAINER" -- \
+            apk update
+    fi
 
     cmd buildah run "$CONTAINER" -- \
         apk add "$@"
