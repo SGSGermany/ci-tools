@@ -19,6 +19,8 @@ export LC_ALL=C
 [ -v CI_TOOLS_PATH ] && [ -d "$CI_TOOLS_PATH" ] \
     || { echo "Invalid build environment: Environment variable 'CI_TOOLS_PATH' not set or invalid" >&2; exit 1; }
 
+source "$CI_TOOLS_PATH/helper/common.sh.inc"
+
 REGISTRY="${1:-}"
 if [ -z "$REGISTRY" ]; then
     echo "Missing required parameter 'REGISTRY'" >&2
@@ -31,11 +33,14 @@ if [ -z "$IMAGE" ]; then
     exit 1
 fi
 
-echo + "podman image exists $IMAGE" >&2
-if ! podman image exists "$IMAGE"; then
-    echo + "podman pull $REGISTRY/$IMAGE" >&2
+echo + "podman image exists $(quote "localhost/$IMAGE")" >&2
+if ! podman image exists "localhost/$IMAGE"; then
+    echo + "podman pull $(quote "$REGISTRY/$IMAGE")" >&2
     podman pull "$REGISTRY/$IMAGE" >&2
-fi
 
-echo + "podman image inspect $IMAGE" >&2
-podman image inspect "$IMAGE"
+    echo + "podman image inspect $(quote "$REGISTRY/$IMAGE")" >&2
+    podman image inspect "$REGISTRY/$IMAGE"
+else
+    echo + "podman image inspect $(quote "localhost/$IMAGE")" >&2
+    podman image inspect "localhost/$IMAGE"
+fi
