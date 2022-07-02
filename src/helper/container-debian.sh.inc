@@ -16,15 +16,13 @@ cleanup() {
     cmd buildah run "$CONTAINER" -- \
         apt-get clean
 
-    echo + "trunc …/tmp …/var/lib/apt/lists …/var/log/{lastlog,faillog,wtmp,btmp} …/var/tmp"
+    echo + "trunc …/var/lib/apt/lists …/var/log/{lastlog,faillog,wtmp,btmp}"
     trunc \
-        "$MOUNT/tmp" \
         "$MOUNT/var/lib/apt/lists" \
         "$MOUNT/var/log/btmp" \
         "$MOUNT/var/log/faillog" \
         "$MOUNT/var/log/lastlog" \
-        "$MOUNT/var/log/wtmp" \
-        "$MOUNT/var/tmp"
+        "$MOUNT/var/log/wtmp"
 
     echo + "rm -f …/etc/{passwd,shadow}- …/etc/{group,gshadow}- …/etc/resolv.conf" \
         "…/var/log/alternatives.log …/var/log/apt/{history.log,term.log} …/var/log/dpkg.log"

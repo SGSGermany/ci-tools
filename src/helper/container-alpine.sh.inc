@@ -13,14 +13,12 @@ cleanup() {
     local CONTAINER="$1"
     local MOUNT="$(buildah mount "$CONTAINER")"
 
-    echo + "trunc …/tmp …/var/cache/apk …/var/log/{lastlog,wtmp,btmp} …/var/tmp"
+    echo + "trunc …/var/cache/apk …/var/log/{lastlog,wtmp,btmp}"
     trunc \
-        "$MOUNT/tmp" \
         "$MOUNT/var/cache/apk" \
         "$MOUNT/var/log/btmp" \
         "$MOUNT/var/log/lastlog" \
-        "$MOUNT/var/log/wtmp" \
-        "$MOUNT/var/tmp"
+        "$MOUNT/var/log/wtmp"
 
     echo + "rm -f …/etc/{passwd,shadow}- …/etc/{group,gshadow}- …/etc/resolv.conf"
     rm -f \

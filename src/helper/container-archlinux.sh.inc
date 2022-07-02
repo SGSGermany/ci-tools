@@ -16,15 +16,13 @@ cleanup() {
     cmd buildah run "$CONTAINER" -- \
         pacman -Sc --noconfirm
 
-    echo + "trunc …/tmp …/var/cache/pacman/pkg …/var/log/{lastlog,wtmp,btmp} …/var/log/pacman.log …/var/tmp" >&2
+    echo + "trunc …/var/cache/pacman/pkg …/var/log/{lastlog,wtmp,btmp} …/var/log/pacman.log" >&2
     trunc \
-        "$MOUNT/tmp" \
         "$MOUNT/var/cache/pacman/pkg" \
         "$MOUNT/var/log/btmp" \
         "$MOUNT/var/log/lastlog" \
         "$MOUNT/var/log/pacman.log" \
-        "$MOUNT/var/log/wtmp" \
-        "$MOUNT/var/tmp"
+        "$MOUNT/var/log/wtmp"
 
     echo + "rm -f …/etc/{passwd,shadow}- …/etc/{group,gshadow}- …/etc/resolv.conf" >&2
     rm -f \
