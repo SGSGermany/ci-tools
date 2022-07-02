@@ -43,6 +43,14 @@ pkg_install() {
         apk add "$@"
 }
 
+pkg_remove() {
+    local CONTAINER="$1"
+    shift
+
+    cmd buildah run "$CONTAINER" -- \
+        apk del "$@"
+}
+
 pkg_version() {
     local CONTAINER="$1"
     local PACKAGE="$2"

@@ -52,6 +52,14 @@ pkg_install() {
         apt-get install --no-install-recommends --yes "$@"
 }
 
+pkg_remove() {
+    local CONTAINER="$1"
+    shift
+
+    cmd buildah run "$CONTAINER" -- \
+        apt-get remove --purge --autoremove --yes "$@"
+}
+
 pkg_version() {
     local CONTAINER="$1"
     local PACKAGE="$2"
