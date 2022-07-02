@@ -79,6 +79,7 @@ user_add() {
 
 user_changeuid() {
     local CONTAINER="$1"
+    local MOUNT="$(buildah mount "$CONTAINER")"
 
     local NEW_USER="$2"
     local NEW_UID="$3"

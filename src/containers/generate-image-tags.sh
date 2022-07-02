@@ -42,7 +42,7 @@ fi
 BUILD_INFO="$(date --utc +'%Y%m%d')$BUILD_INFO"
 
 IMAGE_TAGS=()
-if [[ "$GIT_REF" =~ ^refs/tags/ ]]; then
+if [[ "$GIT_REF" == refs/tags/* ]]; then
     CURRENT_TAG="${GIT_REF:10}"
 
     IMAGE_TAG="$(echo "$CURRENT_TAG" | sed -e 's/\//-/g')"
@@ -65,11 +65,11 @@ if [[ "$GIT_REF" =~ ^refs/tags/ ]]; then
         fi
     fi
 
-    LATEST_TAG="$(git_ls_tags "v*" | head -n 1)"
+    LATEST_TAG="$(git_ls_tags "v*" | head -n1)"
     if [ "refs/tags/$CURRENT_TAG" == "$LATEST_TAG" ]; then
         IMAGE_TAGS+=( "latest" )
     fi
-elif [[ "$GIT_REF" =~ ^refs/heads/ ]]; then
+elif [[ "$GIT_REF" == refs/heads/* ]]; then
     CURRENT_BRANCH="${GIT_REF:11}"
 
     IMAGE_TAG="dev-$(echo "$CURRENT_BRANCH" | sed 's/[^a-zA-Z0-9._-]\{1,\}/-/g')"
