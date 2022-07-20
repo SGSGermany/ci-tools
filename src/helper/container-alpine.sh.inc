@@ -81,6 +81,8 @@ user_changeuid() {
 
     local NEW_USER="$2"
     local NEW_UID="$3"
+    local NEW_HOME="${4:-}"
+    local NEW_SHELL="${5:-}"
 
     local NEW_USER_ESCAPED="$(printf '%s\n' "$NEW_USER" | sed 's/[][\.|$(){}?+*^]/\\&/g')"
 
@@ -102,7 +104,11 @@ user_changeuid() {
         deluser "$NEW_USER"
 
     cmd buildah run "$CONTAINER" -- \
-        adduser -u "$NEW_UID" -s "$OLD_SHELL" -D -h "$OLD_HOME" -H -g "$OLD_GECOS" "$NEW_USER"
+        adduser -u "$NEW_UID" \
+            -s "${NEW_SHELL:-$OLD_SHELL}" -D \
+            -h "${NEW_HOME:-$OLD_HOME}" -H \
+            -g "$OLD_GECOS" \
+            "$NEW_USER"
 
     cmd buildah run "$CONTAINER" -- \
         find / \

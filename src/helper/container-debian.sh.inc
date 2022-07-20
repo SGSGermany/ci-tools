@@ -91,6 +91,8 @@ user_changeuid() {
 
     local NEW_USER="$2"
     local NEW_UID="$3"
+    local NEW_HOME="${4:-}"
+    local NEW_SHELL="${5:-}"
 
     local NEW_USER_ESCAPED="$(printf '%s\n' "$NEW_USER" | sed 's/[][\.|$(){}?+*^]/\\&/g')"
 
@@ -105,8 +107,12 @@ user_changeuid() {
         return 1
     fi
 
+    local NEW_USER_ARGS=()
+    [ -z "$NEW_HOME" ] || NEW_USER_ARGS+=( -d "$NEW_HOME" )
+    [ -z "$NEW_SHELL" ] || NEW_USER_ARGS+=( -s "$NEW_SHELL" )
+
     cmd buildah run "$CONTAINER" -- \
-        usermod -u "$NEW_UID" "$NEW_USER"
+        usermod -u "$NEW_UID" "${NEW_USER_ARGS[@]}" "$NEW_USER"
 
     cmd buildah run "$CONTAINER" -- \
         groupmod -g "$NEW_UID" "$NEW_USER"
