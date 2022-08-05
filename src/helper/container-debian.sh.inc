@@ -64,10 +64,16 @@ pkg_version() {
     local CONTAINER="$1"
     local PACKAGE="$2"
 
-    echo + "VERSION=\"\$(buildah run $(quote "$CONTAINER") -- dpkg -s $(quote "$PACKAGE")" \
+    if [ -n "$(find "$MOUNT/var/lib/apt/lists" -maxdepth 0 -empty)" ]; then
+        cmd buildah run "$CONTAINER" -- \
+            apt-get update
+    fi
+
+    echo + "VERSION=\"\$(buildah run $(quote "$CONTAINER") --" \
+        "apt-cache show $(quote "$PACKAGE")" \
         "| sed -ne 's/^Version: \(.*\)$/\1/p')\"" >&2
     buildah run "$CONTAINER" -- \
-        dpkg -s "$PACKAGE" \
+        apt-cache show "$PACKAGE" \
         | sed -ne 's/^Version: \(.*\)$/\1/p'
 }
 
