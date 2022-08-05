@@ -1,4 +1,4 @@
-# ci-tools -- helper/chkupd.sh.inc
+# ci-tools -- helper/chkupd-archlinux.sh.inc
 # Helper functions to check whether Arch Linux package upgrades are available.
 #
 # Copyright (c) 2022  SGS Serious Gaming & Simulations GmbH

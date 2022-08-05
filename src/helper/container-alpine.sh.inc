@@ -34,7 +34,7 @@ pkg_install() {
     local MOUNT="$(buildah mount "$CONTAINER")"
     shift
 
-    if [ -n "$(find "$MOUNT/var/cache/apk" -mindepth 0 -maxdepth 0 -empty)" ]; then
+    if [ -n "$(find "$MOUNT/var/cache/apk" -maxdepth 0 -empty)" ]; then
         cmd buildah run "$CONTAINER" -- \
             apk update
     fi
