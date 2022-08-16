@@ -37,5 +37,5 @@ trunc() {
 }
 
 sort_semver() {
-    sed '/-/!{s/$/_/}' | sort -V -r | sed 's/_$//'
+    sed -e 's/^\([^+~-]*\)\([^+~]*\)\(.*\)$/\1\t\2_\t\3/' | sort -V -r | sed -e 's/_\?\t//g'
 }
