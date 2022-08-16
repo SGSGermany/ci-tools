@@ -39,10 +39,26 @@ php_install_ext() {
                 EXT_INSTALLS+=( "gd" )
                 ;;
 
+            "imap")
+                PACKAGES+=( "imap-dev" )
+                EXT_CONFIGURES+=( "imap --with-imap-ssl" )
+                EXT_INSTALLS+=( "imap" )
+                ;;
+
             "intl")
                 PACKAGES+=( "icu-dev" )
                 EXT_CONFIGURES+=( "intl" )
                 EXT_INSTALLS+=( "intl" )
+                ;;
+
+            "ldap")
+                PACKAGES+=( "openldap-dev" )
+                EXT_INSTALLS+=( "ldap" )
+                ;;
+
+            "zip")
+                PACKAGES+=( "libzip-dev" )
+                EXT_INSTALLS+=( "zip" )
                 ;;
 
             *)
