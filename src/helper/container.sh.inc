@@ -17,6 +17,6 @@ con_commit() {
     cmd buildah rm "$CONTAINER"
 
     for TAG in "${TAGS[@]:1}"; do
-        cmd buildah tag "localhost/$IMAGE:${TAGS[0]}" "localhost/$IMAGE:$TAG"
+        cmd podman tag "localhost/$IMAGE:${TAGS[0]}" "localhost/$IMAGE:$TAG"
     done
 }
