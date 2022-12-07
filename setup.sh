@@ -47,4 +47,7 @@ if [ "${GITHUB_ACTIONS:-false}" == "true" ]; then
         || mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/containers"
     printf '[storage]\ndriver = "%s"\n' "vfs" \
         > "${XDG_CONFIG_HOME:-$HOME/.config}/containers/storage.conf"
+
+    echo "Resetting Podman storage..." >&2
+    podman system reset --force >&2
 fi
