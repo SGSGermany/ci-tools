@@ -9,6 +9,12 @@
 # SPDX-License-Identifier: MIT
 # License-Filename: LICENSE
 
+[ -x "$(which rsync 2>/dev/null)" ] \
+    || { echo "Missing CI tools script dependency: rsync" >&2; exit 1; }
+
+[ -x "$(which patch 2>/dev/null)" ] \
+    || { echo "Missing CI tools script dependency: patch" >&2; exit 1; }
+
 patch_apply() {
     local CONTAINER="$1"
     local MOUNT="$(buildah mount "$CONTAINER")"
