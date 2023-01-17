@@ -13,7 +13,7 @@ con_commit() {
     local CONTAINER="$1"
     local TAGS=( "${@:2}" )
 
-    cmd buildah commit "$CONTAINER" "localhost/$IMAGE:${TAGS[0]}"
+    cmd buildah commit --omit-history "$CONTAINER" "localhost/$IMAGE:${TAGS[0]}"
     cmd buildah rm "$CONTAINER"
 
     for TAG in "${TAGS[@]:1}"; do
