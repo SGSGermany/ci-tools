@@ -10,7 +10,7 @@
 # License-Filename: LICENSE
 
 chkconf_prepare() {
-    local TYPE= INFO=
+    local TYPE= SRC_INFO=
     local SRC="$2"
     local DIR="$3"
 
