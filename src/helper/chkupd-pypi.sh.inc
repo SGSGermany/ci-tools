@@ -29,8 +29,8 @@ chkupd_pypi() {
     trap_exit buildah rm "$CONTAINER"
 
     # check whether image is based on Alpine Linux
-    echo + "if buildah run $(quote "$CONTAINER") -- test -f /etc/alpine-release; then … fi" >&2
-    if buildah run "$CONTAINER" -- test -f "/etc/alpine-release"; then
+    echo + "if buildah run --user root $(quote "$CONTAINER") -- test -f /etc/alpine-release; then … fi" >&2
+    if buildah run --user root "$CONTAINER" -- test -f "/etc/alpine-release"; then
         echo "Invalid image '$IMAGE': Expecting an Alpine Linux image" >&2
         echo "Internal error" >&2
         echo "build"
@@ -38,12 +38,12 @@ chkupd_pypi() {
     fi
 
     # install pip
-    cmd buildah run "$CONTAINER" -- \
+    cmd buildah run --user root "$CONTAINER" -- \
         apk add --no-cache py3-pip >&2
 
     # check for PyPi package upgrades
-    echo + "PACKAGE_UPGRADES=\"\$(buildah run $(quote "$CONTAINER") -- pip list --user --outdated)\"" >&2
-    local PACKAGE_UPGRADES="$(buildah run "$CONTAINER" -- pip list --user --outdated)"
+    echo + "PACKAGE_UPGRADES=\"\$(buildah run --user root $(quote "$CONTAINER") -- pip list --user --outdated)\"" >&2
+    local PACKAGE_UPGRADES="$(buildah run --user root "$CONTAINER" -- pip list --user --outdated)"
 
     if [ -n "$PACKAGE_UPGRADES" ]; then
         echo "Image is out of date: PyPi package upgrades are available" >&2
@@ -72,8 +72,8 @@ chkupd_pypi_requirements() {
     trap_exit buildah rm "$CONTAINER"
 
     # check whether image is based on Alpine Linux
-    echo + "if buildah run $(quote "$CONTAINER") -- test -f /etc/alpine-release; then … fi" >&2
-    if buildah run "$CONTAINER" -- test -f "/etc/alpine-release"; then
+    echo + "if buildah run --user root $(quote "$CONTAINER") -- test -f /etc/alpine-release; then … fi" >&2
+    if buildah run --user root "$CONTAINER" -- test -f "/etc/alpine-release"; then
         echo "Invalid image '$IMAGE': Expecting an Alpine Linux image" >&2
         echo "Internal error" >&2
         echo "build"
@@ -81,14 +81,14 @@ chkupd_pypi_requirements() {
     fi
 
     # install pip and jq
-    cmd buildah run "$CONTAINER" -- \
+    cmd buildah run --user root "$CONTAINER" -- \
         apk add --no-cache py3-pip jq >&2
 
     # check for PyPi package upgrades based on requirements.txt files
     echo + "PACKAGE_UPGRADES=()" >&2
     echo + "for REQUIREMENTS_FILE in \"\$@\"; do" >&2
     echo + "    readarray -t -O \${#PACKAGE_UPGRADES[@]} PACKAGE_UPGRADES < <( \\" >&2
-    echo + "        buildah run $(quote "$CONTAINER") -- \\" >&2
+    echo + "        buildah run --user root $(quote "$CONTAINER") -- \\" >&2
     echo + "            pip install --upgrade -r \"\$REQUIREMENTS_FILE\" --dry-run --quiet --report - 2> /dev/null \\" >&2
     echo + "                | jq -r '.install[] | \"\(.metadata.name)  \(.metadata.version)\"' \\" >&2
     echo + "    )" >&2
@@ -97,7 +97,7 @@ chkupd_pypi_requirements() {
     local PACKAGE_UPGRADES=()
     for REQUIREMENTS_FILE in "$@"; do
         readarray -t -O "${#PACKAGE_UPGRADES[@]}" PACKAGE_UPGRADES < <( \
-            buildah run "$CONTAINER" -- \
+            buildah run --user root "$CONTAINER" -- \
                 pip install --upgrade -r "$REQUIREMENTS_FILE" --dry-run --quiet --report - 2> /dev/null \
                     | jq -r '.install[] | "\(.metadata.name)  \(.metadata.version)"' \
         )

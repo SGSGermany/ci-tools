@@ -13,7 +13,7 @@ cleanup() {
     local CONTAINER="$1"
     local MOUNT="$(buildah mount "$CONTAINER")"
 
-    cmd buildah run "$CONTAINER" -- \
+    cmd buildah run --user root "$CONTAINER" -- \
         pacman -Sc --noconfirm
 
     echo + "trunc …/var/cache/pacman/pkg …/var/log/{lastlog,wtmp,btmp} …/var/log/pacman.log" >&2
@@ -38,15 +38,15 @@ pkg_install() {
     shift
 
     local PKG_STATUS=0
-    cmd buildah run "$CONTAINER" -- \
+    cmd buildah run --user root "$CONTAINER" -- \
         pacman -S --noconfirm "$@" \
             || { PKG_STATUS=$?; true; }
 
     if [ $PKG_STATUS -ne 0 ]; then
-        cmd buildah run "$CONTAINER" -- \
+        cmd buildah run --user root "$CONTAINER" -- \
             pacman -Syu --noconfirm
 
-        cmd buildah run "$CONTAINER" -- \
+        cmd buildah run --user root "$CONTAINER" -- \
             pacman -S --noconfirm "$@"
     fi
 }
@@ -63,9 +63,9 @@ pkg_version() {
     local CONTAINER="$1"
     local PACKAGE="$2"
 
-    echo + "VERSION=\"\$(buildah run $(quote "$CONTAINER") -- pacman -Si $(quote "$PACKAGE")" \
+    echo + "VERSION=\"\$(buildah run --user root $(quote "$CONTAINER") -- pacman -Si $(quote "$PACKAGE")" \
         "| sed -ne 's/^Version\s*: \(.*\)$/\1/p')\"" >&2
-    buildah run "$CONTAINER" -- \
+    buildah run --user root "$CONTAINER" -- \
         pacman -Si "$PACKAGE" \
         | sed -ne 's/^Version\s*: \(.*\)$/\1/p'
 }
@@ -78,10 +78,10 @@ user_add() {
     local NEW_HOME="${4:-/}"
     local NEW_SHELL="${5:-/sbin/nologin}"
 
-    cmd buildah run "$CONTAINER" -- \
+    cmd buildah run --user root "$CONTAINER" -- \
         groupadd -g "$NEW_UID" "$NEW_USER"
 
-    cmd buildah run "$CONTAINER" -- \
+    cmd buildah run --user root "$CONTAINER" -- \
         useradd -u "$NEW_UID" -g "$NEW_USER" -s "$NEW_SHELL" -d "$NEW_HOME" -M -c "" "$NEW_USER"
 }
 
@@ -111,13 +111,13 @@ user_changeuid() {
     [ -z "$NEW_HOME" ] || NEW_USER_ARGS+=( -d "$NEW_HOME" )
     [ -z "$NEW_SHELL" ] || NEW_USER_ARGS+=( -s "$NEW_SHELL" )
 
-    cmd buildah run "$CONTAINER" -- \
+    cmd buildah run --user root "$CONTAINER" -- \
         usermod -u "$NEW_UID" "${NEW_USER_ARGS[@]}" "$NEW_USER"
 
-    cmd buildah run "$CONTAINER" -- \
+    cmd buildah run --user root "$CONTAINER" -- \
         groupmod -g "$NEW_UID" "$NEW_USER"
 
-    cmd buildah run "$CONTAINER" -- \
+    cmd buildah run --user root "$CONTAINER" -- \
         find / \
             -path "/dev" -prune \
             -o -path "/proc" -prune \
@@ -125,7 +125,7 @@ user_changeuid() {
             -o -user "$OLD_UID" \
             -exec chown -h "$NEW_USER" {} \;
 
-    cmd buildah run "$CONTAINER" -- \
+    cmd buildah run --user root "$CONTAINER" -- \
         find / \
             -path "/dev" -prune \
             -o -path "/proc" -prune \

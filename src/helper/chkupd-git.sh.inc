@@ -32,9 +32,9 @@ chkupd_git() {
     trap_exit buildah rm "$CONTAINER"
 
     # compare current and latest Git tags
-    echo + "CURRENT_VERSION=\"\$(buildah run $(quote "$CONTAINER") --" \
+    echo + "CURRENT_VERSION=\"\$(buildah run --user root $(quote "$CONTAINER") --" \
         "sed -ne 's/^VERSION=\(.*\)$/\1/p' $(quote "$VERSION_FILE"))\"" >&2
-    local CURRENT_VERSION="$(buildah run "$CONTAINER" -- \
+    local CURRENT_VERSION="$(buildah run --user root "$CONTAINER" -- \
         sed -ne 's/^VERSION=\(.*\)$/\1/p' "$VERSION_FILE")"
 
     local VERSION="$(git_latest "$GIT_REPO" "$GIT_TAG_PATTERN")"

@@ -35,11 +35,11 @@ pkg_install() {
     shift
 
     if [ -n "$(find "$MOUNT/var/cache/apk" -maxdepth 0 -empty)" ]; then
-        cmd buildah run "$CONTAINER" -- \
+        cmd buildah run --user root "$CONTAINER" -- \
             apk update
     fi
 
-    cmd buildah run "$CONTAINER" -- \
+    cmd buildah run --user root "$CONTAINER" -- \
         apk add "$@"
 }
 
@@ -47,7 +47,7 @@ pkg_remove() {
     local CONTAINER="$1"
     shift
 
-    cmd buildah run "$CONTAINER" -- \
+    cmd buildah run --user root "$CONTAINER" -- \
         apk del "$@"
 }
 
@@ -56,10 +56,10 @@ pkg_version() {
     local PACKAGE="$2"
     local PACKAGE_ESCAPED=$(printf '%s\n' "$PACKAGE" | sed -e 's/[]\/$*.^[]/\\&/g');
 
-    echo + "VERSION=\"\$(buildah run $(quote "$CONTAINER") --" \
+    echo + "VERSION=\"\$(buildah run --user root $(quote "$CONTAINER") --" \
         "apk search --no-cache --exact $(quote "$PACKAGE")" \
         "| sed -ne $(quote "s/^$PACKAGE_ESCAPED-\(.*\)$/\1/p"))\"" >&2
-    local VERSION="$(buildah run "$CONTAINER" -- \
+    local VERSION="$(buildah run --user root "$CONTAINER" -- \
         apk search --no-cache --exact "$PACKAGE" \
         | sed -ne "s/^$PACKAGE_ESCAPED-\(.*\)$/\1/p")"
 
@@ -75,7 +75,7 @@ user_add() {
     local NEW_HOME="${4:-/}"
     local NEW_SHELL="${5:-/sbin/nologin}"
 
-    cmd buildah run "$CONTAINER" -- \
+    cmd buildah run --user root "$CONTAINER" -- \
         adduser -u "$NEW_UID" -s "$NEW_SHELL" -D -h "$NEW_HOME" -H -g "" "$NEW_USER"
 }
 
@@ -104,17 +104,17 @@ user_changeuid() {
         return 1
     fi
 
-    cmd buildah run "$CONTAINER" -- \
+    cmd buildah run --user root "$CONTAINER" -- \
         deluser "$NEW_USER"
 
-    cmd buildah run "$CONTAINER" -- \
+    cmd buildah run --user root "$CONTAINER" -- \
         adduser -u "$NEW_UID" \
             -s "${NEW_SHELL:-$OLD_SHELL}" -D \
             -h "${NEW_HOME:-$OLD_HOME}" -H \
             -g "$OLD_GECOS" \
             "$NEW_USER"
 
-    cmd buildah run "$CONTAINER" -- \
+    cmd buildah run --user root "$CONTAINER" -- \
         find / \
             -path "/dev" -prune \
             -o -path "/proc" -prune \
@@ -122,7 +122,7 @@ user_changeuid() {
             -o -user "$OLD_UID" \
             -exec chown -h "$NEW_USER" {} \;
 
-    cmd buildah run "$CONTAINER" -- \
+    cmd buildah run --user root "$CONTAINER" -- \
         find / \
             -path "/dev" -prune \
             -o -path "/proc" -prune \

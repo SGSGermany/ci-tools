@@ -15,8 +15,8 @@ __apk_info() {
     local CONTAINER="$1"
 
     local PACKAGES PACKAGE_VERSIONS
-    readarray -t PACKAGES < <(buildah run "$CONTAINER" -- apk info)
-    readarray -t PACKAGE_VERSIONS < <(buildah run "$CONTAINER" -- apk info -v)
+    readarray -t PACKAGES < <(buildah run --user root "$CONTAINER" -- apk info)
+    readarray -t PACKAGE_VERSIONS < <(buildah run --user root "$CONTAINER" -- apk info -v)
 
     local INDEX PACKAGE
     for (( INDEX=0 ; INDEX < ${#PACKAGES[@]} ; INDEX++ )); do
@@ -47,18 +47,18 @@ chkupd_packages() {
 
     # run `apk update` to make sure that we don't confound pending base image updates
     # and `apk info` to get a list of installed packages and their respective versions
-    cmd buildah run "$BASE_CONTAINER" -- \
+    cmd buildah run --user root "$BASE_CONTAINER" -- \
         apk update >&2
 
-    echo + "BASE_PACKAGES=\"\$(buildah run $(quote "$BASE_CONTAINER") -- apk info -v | sort)\"" >&2
+    echo + "BASE_PACKAGES=\"\$(buildah run --user root $(quote "$BASE_CONTAINER") -- apk info -v | sort)\"" >&2
     local BASE_PACKAGES="$(__apk_info "$BASE_CONTAINER" | sort)"
 
     # run `apk add` to install the container's packages, then run `apk info` again
     # and compare it with the previous list to get a list of the newly installed packages
-    cmd buildah run "$BASE_CONTAINER" -- \
+    cmd buildah run --user root "$BASE_CONTAINER" -- \
         apk add "$@" >&2
 
-    echo + "ALL_PACKAGES=\"\$(buildah run $(quote "$BASE_CONTAINER") -- apk info -v | sort)\"" >&2
+    echo + "ALL_PACKAGES=\"\$(buildah run --user root $(quote "$BASE_CONTAINER") -- apk info -v | sort)\"" >&2
     local ALL_PACKAGES="$(__apk_info "$BASE_CONTAINER" | sort)"
 
     echo + "readarray -t PACKAGES < <(comm -13 <(echo \"\$BASE_PACKAGES\") <(echo \"\$ALL_PACKAGES\"))" >&2
@@ -78,7 +78,7 @@ chkupd_packages() {
     trap_exit buildah rm "$CONTAINER"
 
     # run `apk info` to get a list of installed packages
-    echo + "OLD_PACKAGES=\"\$(buildah run $(quote "$CONTAINER") -- apk info -v | sort)\"" >&2
+    echo + "OLD_PACKAGES=\"\$(buildah run --user root $(quote "$CONTAINER") -- apk info -v | sort)\"" >&2
     local OLD_PACKAGES="$(__apk_info "$BASE_CONTAINER" | sort)"
 
     # check whether the container's packages are up-to-date

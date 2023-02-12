@@ -76,21 +76,21 @@ php_install_ext() {
     fi
 
     for EXT_CONFIGURE in "${EXT_CONFIGURES[@]}"; do
-        cmd buildah run "$CONTAINER" -- \
+        cmd buildah run --user root "$CONTAINER" -- \
             docker-php-ext-configure \
                 $EXT_CONFIGURE
     done
 
     if [ ${#EXT_INSTALLS[@]} -gt 0 ]; then
-        cmd buildah run "$CONTAINER" -- \
+        cmd buildah run --user root "$CONTAINER" -- \
             docker-php-ext-install -j "$(nproc)" \
                 "${EXT_INSTALLS[@]}"
     fi
 
     if [ ${#PACKAGES[@]} -gt 0 ]; then
-        echo + "PHP_RUN_DEPS=( \$(buildah run $(quote "$CONTAINER") scanelf --needed --recursive /usr/local/lib/php/extensions …) )" >&2
+        echo + "PHP_RUN_DEPS=( \$(buildah run --user root $(quote "$CONTAINER") scanelf --needed --recursive /usr/local/lib/php/extensions …) )" >&2
         local PHP_RUN_DEPS=( $(
-            buildah run "$CONTAINER" -- \
+            buildah run --user root "$CONTAINER" -- \
                 scanelf --needed --recursive "/usr/local/lib/php/extensions" --nobanner --format '%n#p' \
                     | tr ',' '\n' \
                     | sort -u \

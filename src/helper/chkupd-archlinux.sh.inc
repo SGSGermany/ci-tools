@@ -30,19 +30,19 @@ chkupd_packages() {
 
     # run `pacman -Syu` to make sure that we don't confound pending base image updates
     # and `pacman -Q` to get a list of installed packages and their respective versions
-    cmd buildah run "$BASE_CONTAINER" -- \
+    cmd buildah run --user root "$BASE_CONTAINER" -- \
         pacman -Syu --noconfirm >&2
 
-    echo + "BASE_PACKAGES=\"\$(buildah run $(quote "$BASE_CONTAINER") -- pacman -Q | sort)\"" >&2
-    local BASE_PACKAGES="$(buildah run "$BASE_CONTAINER" -- pacman -Q | sort)"
+    echo + "BASE_PACKAGES=\"\$(buildah run --user root $(quote "$BASE_CONTAINER") -- pacman -Q | sort)\"" >&2
+    local BASE_PACKAGES="$(buildah run --user root "$BASE_CONTAINER" -- pacman -Q | sort)"
 
     # run `pacman -S` to install the container's packages, then run `pacman -Q` again
     # and compare it with the previous list to get a list of the newly installed packages
-    cmd buildah run "$BASE_CONTAINER" -- \
+    cmd buildah run --user root "$BASE_CONTAINER" -- \
         pacman -S --noconfirm "$@" >&2
 
-    echo + "ALL_PACKAGES=\"\$(buildah run $(quote "$BASE_CONTAINER") -- pacman -Q | sort)\"" >&2
-    local ALL_PACKAGES="$(buildah run "$BASE_CONTAINER" -- pacman -Q | sort)"
+    echo + "ALL_PACKAGES=\"\$(buildah run --user root $(quote "$BASE_CONTAINER") -- pacman -Q | sort)\"" >&2
+    local ALL_PACKAGES="$(buildah run --user root "$BASE_CONTAINER" -- pacman -Q | sort)"
 
     echo + "readarray -t PACKAGES < <(comm -13 <(echo \"\$BASE_PACKAGES\") <(echo \"\$ALL_PACKAGES\"))" >&2
     readarray -t PACKAGES < <(comm -13 <(echo "$BASE_PACKAGES") <(echo "$ALL_PACKAGES"))
@@ -61,8 +61,8 @@ chkupd_packages() {
     trap_exit buildah rm "$CONTAINER"
 
     # run `pacman -Q` to get a list of installed packages
-    echo + "OLD_PACKAGES=\"\$(buildah run $(quote "$CONTAINER") -- pacman -Q)\"" >&2
-    local OLD_PACKAGES="$(buildah run "$CONTAINER" -- pacman -Q)"
+    echo + "OLD_PACKAGES=\"\$(buildah run --user root $(quote "$CONTAINER") -- pacman -Q)\"" >&2
+    local OLD_PACKAGES="$(buildah run --user root "$CONTAINER" -- pacman -Q)"
 
     # check whether the container's packages are up-to-date
     echo + "PACKAGE_UPGRADES=()" >&2
