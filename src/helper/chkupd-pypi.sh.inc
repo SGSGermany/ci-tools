@@ -29,8 +29,8 @@ chkupd_pypi() {
     trap_exit buildah rm "$CONTAINER"
 
     # check whether image is based on Alpine Linux
-    echo + "if buildah run --user root $(quote "$CONTAINER") -- test -f /etc/alpine-release; then … fi" >&2
-    if buildah run --user root "$CONTAINER" -- test -f "/etc/alpine-release"; then
+    echo + "if ! buildah run --user root $(quote "$CONTAINER") -- test -f /etc/alpine-release; then … fi" >&2
+    if ! buildah run --user root "$CONTAINER" -- test -f "/etc/alpine-release"; then
         echo "Invalid image '$IMAGE': Expecting an Alpine Linux image" >&2
         echo "Internal error" >&2
         echo "build"
@@ -72,8 +72,8 @@ chkupd_pypi_requirements() {
     trap_exit buildah rm "$CONTAINER"
 
     # check whether image is based on Alpine Linux
-    echo + "if buildah run --user root $(quote "$CONTAINER") -- test -f /etc/alpine-release; then … fi" >&2
-    if buildah run --user root "$CONTAINER" -- test -f "/etc/alpine-release"; then
+    echo + "if ! buildah run --user root $(quote "$CONTAINER") -- test -f /etc/alpine-release; then … fi" >&2
+    if ! buildah run --user root "$CONTAINER" -- test -f "/etc/alpine-release"; then
         echo "Invalid image '$IMAGE': Expecting an Alpine Linux image" >&2
         echo "Internal error" >&2
         echo "build"
