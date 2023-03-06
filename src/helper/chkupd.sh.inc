@@ -100,3 +100,37 @@ chkupd_baseimage() {
         fi
     fi
 }
+
+chkupd_image_version() {
+    local IMAGE="$1"
+    local LATEST_VERSION="$2"
+
+    echo + "IMAGE_ID=\"\$(podman pull $(quote "$IMAGE"))\"" >&2
+    local IMAGE_ID="$(podman pull "$IMAGE" || true)"
+
+    if [ -z "$IMAGE_ID" ]; then
+        echo "Failed to pull image '$IMAGE': No image with this tag found" >&2
+        echo "Image rebuild required" >&2
+        echo "build"
+        return 1
+    fi
+
+    echo + "CURRENT_VERSION=\"\$(podman image inspect --format '{{index .Annotations \"org.opencontainers.image.version\"}}' $IMAGE_ID)\"" >&2
+    local CURRENT_VERSION="$(podman image inspect --format '{{index .Annotations "org.opencontainers.image.version"}}' "$IMAGE_ID" || true)"
+
+    if [ -z "$CURRENT_VERSION" ]; then
+        echo "Failed to inspect image '$IMAGE': The image specifies no version" >&2
+        echo "Image rebuild required" >&2
+        echo "build"
+        return 1
+    fi
+
+    if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
+        echo "Image is out of date: Versions differ" >&2
+        echo "Current version: $CURRENT_VERSION" >&2
+        echo "Latest version: $LATEST_VERSION" >&2
+        echo "Image rebuild required" >&2
+        echo "build"
+        return 1
+    fi
+}
