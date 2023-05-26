@@ -47,7 +47,7 @@ con_build() {
         local FILE="Dockerfile"
         [ -f "$CONTEXT/Dockerfile" ] || FILE="Containerfile"
 
-        echo + "ORIG_BASE_IMAGE=\"\$(sed -ne '0,/^FROM /{s/^FROM \(\S*\)\( as \S*\)\?$/\1/pi}' $(quote "$CONTEXT/$FILE"))\"" >&2
+        echo + "ORIG_BASE_IMAGE=\"\$(sed -ne '0,/^FROM /{s/^FROM \(\S*\)\( as \S*\)\?$/\1/pi}' $(quote "$CONTEXT_INFO/$FILE"))\"" >&2
         ORIG_BASE_IMAGE="$(sed -ne '0,/^FROM /{s/^FROM \(\S*\)\( as \S*\)\?$/\1/pi}' "$CONTEXT/$FILE")"
 
         echo + "[[ $(quote "$ORIG_BASE_IMAGE") == $ORIG_BASE_IMAGE_PATTERN ]]"
