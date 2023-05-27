@@ -41,11 +41,21 @@ git_clone() {
         mkdir -p "$DIR"
     fi
 
-    echo + "$(__quote_git "$DIR_INFO") init" >&2
-    git -C "$DIR" init
+    if [ "$(git -C "$DIR" rev-parse --show-toplevel 2> /dev/null || true)" != "$(realpath "$DIR")" ]; then
+        echo + "$(__quote_git "$DIR_INFO") init" >&2
+        git -C "$DIR" init
+    fi
 
-    echo + "$(__quote_git "$DIR_INFO") remote add origin $(quote "$GIT_REPO")" >&2
-    git -C "$DIR" remote add "origin" "$GIT_REPO"
+    local GIT_REPO_CHECK="$(git -C "$DIR" remote get-url "origin" 2> /dev/null || true)"
+    if [ "$GIT_REPO_CHECK" != "$GIT_REPO" ]; then
+        if [ -n "$GIT_REPO_CHECK" ]; then
+            echo + "$(__quote_git "$DIR_INFO") remote remove origin" >&2
+            git -C "$DIR" remote remove "origin"
+        fi
+
+        echo + "$(__quote_git "$DIR_INFO") remote add origin $(quote "$GIT_REPO")" >&2
+        git -C "$DIR" remote add "origin" "$GIT_REPO"
+    fi
 
     if [[ "$GIT_REF" == refs/* ]]; then
         echo + "GIT_COMMIT=\"\$($(__quote_git "$DIR_INFO") ls-remote --refs origin $(quote "$GIT_REF") | tail -n1 | cut -f1)\"" >&2
@@ -59,11 +69,13 @@ git_clone() {
         return 1
     fi
 
-    echo + "$(__quote_git "$DIR_INFO") fetch --depth 1 origin $(quote "$GIT_COMMIT")" >&2
-    git -C "$DIR" fetch --depth 1 origin "$GIT_COMMIT"
+    if [ "$(git -C "$DIR" rev-parse --verify HEAD 2> /dev/null)" != "$GIT_COMMIT" ]; then
+        echo + "$(__quote_git "$DIR_INFO") fetch --depth 1 origin $(quote "$GIT_COMMIT")" >&2
+        git -C "$DIR" fetch --depth 1 origin "$GIT_COMMIT"
 
-    echo + "$(__quote_git "$DIR_INFO") checkout --detach $(quote "$GIT_COMMIT")" >&2
-    git -C "$DIR" checkout --detach "$GIT_COMMIT"
+        echo + "$(__quote_git "$DIR_INFO") checkout --detach $(quote "$GIT_COMMIT")" >&2
+        git -C "$DIR" checkout --detach "$GIT_COMMIT"
+    fi
 }
 
 git_ungit() {
