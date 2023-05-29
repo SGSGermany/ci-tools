@@ -14,14 +14,11 @@ con_build() {
     local CONTEXT_INFO="${@: -1}"
     set -- "${@:1:$#-2}"
 
-    echo + "[ -f $(quote "$CONTEXT_INFO/Dockerfile") ] || [ -f $(quote "$CONTEXT_INFO/Containerfile") ]" >&2
-    if [ ! -f "$CONTEXT/Dockerfile" ] && [ ! -f "$CONTEXT/Containerfile" ]; then
-        echo "Invalid build context: Dockerfile '$CONTEXT_INFO/Dockerfile' not found" >&2
-        return 1
-    fi
+    local ORIG_BASE_IMAGE_PATTERN=""
+    local ORIG_BASE_IMAGE=""
 
-    local ORIG_BASE_IMAGE_PATTERN
-    local ORIG_BASE_IMAGE
+    local FILE=""
+    local FILE_INFO=""
 
     local PARAMS=()
     while [ $# -gt 0 ]; do
@@ -36,6 +33,17 @@ con_build() {
                 shift 2
                 ;;
 
+            "-f"|"--file")
+                if [ $# -lt 2 ]; then
+                    echo "Missing required argument for option '--file': CONTAINERFILE" >&2
+                    return 1
+                fi
+
+                [ -n "$FILE" ] || FILE="$2"
+                PARAMS+=( --file "$2" )
+                shift 2
+                ;;
+
             *)
                 PARAMS+=( "$1" )
                 shift
@@ -43,16 +51,34 @@ con_build() {
         esac
     done
 
-    if [ -n "$ORIG_BASE_IMAGE_PATTERN" ]; then
-        local FILE="Dockerfile"
-        [ -f "$CONTEXT/Dockerfile" ] || FILE="Containerfile"
+    if [ -n "$FILE" ]; then
+        if [ -f "$FILE" ]; then
+            FILE_INFO="$FILE"
+        elif [ "${FILE:0:1}" != "/" ] && [ -f "$CONTEXT/$FILE" ]; then
+            FILE="$CONTEXT/$FILE"
+            FILE_INFO="$CONTEXT_INFO/$FILE"
+        else
+            echo "Invalid build context: Containerfile '$FILE' not found" >&2
+            return 1
+        fi
+    elif [ -f "$CONTEXT/Containerfile" ]; then
+        FILE="$CONTEXT/Containerfile"
+        FILE_INFO="$CONTEXT_INFO/Containerfile"
+    elif [ -f "$CONTEXT/Dockerfile" ]; then
+        FILE="$CONTEXT/Dockerfile"
+        FILE_INFO="$CONTEXT_INFO/Dockerfile"
+    else
+        echo "Invalid build context: Containerfile '$CONTEXT_INFO/Containerfile' not found" >&2
+        return 1
+    fi
 
-        echo + "ORIG_BASE_IMAGE=\"\$(sed -ne '0,/^FROM /{s/^FROM \(\S*\)\( as \S*\)\?$/\1/pi}' $(quote "$CONTEXT_INFO/$FILE"))\"" >&2
-        ORIG_BASE_IMAGE="$(sed -ne '0,/^FROM /{s/^FROM \(\S*\)\( as \S*\)\?$/\1/pi}' "$CONTEXT/$FILE")"
+    if [ -n "$ORIG_BASE_IMAGE_PATTERN" ]; then
+        echo + "ORIG_BASE_IMAGE=\"\$(sed -ne '0,/^FROM /{s/^FROM \(\S*\)\( as \S*\)\?$/\1/pi}' $(quote "$FILE_INFO"))\"" >&2
+        ORIG_BASE_IMAGE="$(sed -ne '0,/^FROM /{s/^FROM \(\S*\)\( as \S*\)\?$/\1/pi}' "$FILE")"
 
         echo + "[[ $(quote "$ORIG_BASE_IMAGE") == $ORIG_BASE_IMAGE_PATTERN ]]"
         if ! [[ "$ORIG_BASE_IMAGE" == $ORIG_BASE_IMAGE_PATTERN ]]; then
-            echo "Invalid build context: Expecting base image in '$CONTEXT_INFO/$FILE' to match '$ORIG_BASE_IMAGE_PATTERN', got '$ORIG_BASE_IMAGE'" >&2
+            echo "Invalid build context: Expecting base image in '$FILE_INFO' to match '$ORIG_BASE_IMAGE_PATTERN', got '$ORIG_BASE_IMAGE'" >&2
             return 1
         fi
     fi
