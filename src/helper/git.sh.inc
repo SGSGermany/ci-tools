@@ -43,7 +43,7 @@ git_clone() {
 
     if [ "$(git -C "$DIR" rev-parse --show-toplevel 2> /dev/null || true)" != "$(realpath "$DIR")" ]; then
         echo + "$(__quote_git "$DIR_INFO") init" >&2
-        git -C "$DIR" init
+        git -C "$DIR" init >&2
     fi
 
     local GIT_REPO_CHECK="$(git -C "$DIR" remote get-url "origin" 2> /dev/null || true)"
