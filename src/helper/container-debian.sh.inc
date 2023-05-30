@@ -49,7 +49,9 @@ pkg_install() {
     fi
 
     cmd buildah run --user root "$CONTAINER" -- \
-        apt-get install --no-install-recommends --yes "$@"
+        apt-get -o Dpkg::Use-Pty="0" \
+            install --no-install-recommends --yes \
+            "$@"
 }
 
 pkg_remove() {
@@ -57,7 +59,9 @@ pkg_remove() {
     shift
 
     cmd buildah run --user root "$CONTAINER" -- \
-        apt-get remove --purge --autoremove --yes "$@"
+        apt-get -o Dpkg::Use-Pty="0" \
+            remove --purge --autoremove --yes \
+            "$@"
 }
 
 pkg_version() {
