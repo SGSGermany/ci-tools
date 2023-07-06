@@ -62,14 +62,19 @@ EOL_DATE="$(jq -er "$JQ_FILTER" <<< "$CYCLE_INFO")"
 echo + "CURRENT_DATE=\"\$(date +'%Y-%m-%d')\"" >&2
 CURRENT_DATE="$(date +'%Y-%m-%d')"
 
-echo + "[[ $(quote "$EOL_DATE") < $(quote "$CURRENT_DATE") ]]" >&2
-if [[ "$EOL_DATE" < "$CURRENT_DATE" ]]; then
+EXIT_CODE=0
+
+echo + "[[ $(quote "$CURRENT_DATE") < $(quote "$EOL_DATE") ]]" >&2
+if [[ "$CURRENT_DATE" < "$EOL_DATE" ]]; then
+    echo "$PROJECT $CYCLE is supported till $EOL_DATE"
+else
     echo "$PROJECT $CYCLE has reached its end of life on $EOL_DATE"
-
-    LATEST_VERSION="$(jq -r '.latest // empty' <<< "$CYCLE_INFO")"
-    LATEST_VERSION_DATE="$(jq -r '.latestReleaseDate // empty' <<< "$CYCLE_INFO")"
-    [ -z "$LATEST_VERSION" ] || [ -z "$LATEST_VERSION_DATE" ] \
-        || echo "The latest version $LATEST_VERSION was released on $LATEST_VERSION_DATE"
-
-    exit 1
+    EXIT_CODE=1
 fi
+
+LATEST_VERSION="$(jq -r '.latest // empty' <<< "$CYCLE_INFO")"
+LATEST_VERSION_DATE="$(jq -r '.latestReleaseDate // empty' <<< "$CYCLE_INFO")"
+[ -z "$LATEST_VERSION" ] || [ -z "$LATEST_VERSION_DATE" ] \
+    || echo "The latest version $LATEST_VERSION was released on $LATEST_VERSION_DATE"
+
+exit $EXIT_CODE
