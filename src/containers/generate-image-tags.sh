@@ -11,7 +11,7 @@
 # License-Filename: LICENSE
 
 set -eu -o pipefail
-export LC_ALL=C
+export LC_ALL=C.UTF-8
 
 [ -v CI_TOOLS ] && [ "$CI_TOOLS" == "SGSGermany" ] \
     || { echo "Invalid build environment: Environment variable 'CI_TOOLS' not set or invalid" >&2; exit 1; }
@@ -20,6 +20,9 @@ export LC_ALL=C
     || { echo "Invalid build environment: Environment variable 'CI_TOOLS_PATH' not set or invalid" >&2; exit 1; }
 
 source "$CI_TOOLS_PATH/helper/common.sh.inc"
+
+[ -x "$(which git 2>/dev/null)" ] \
+    || { echo "Missing CI tools script dependency: git" >&2; exit 1; }
 
 git rev-parse --git-dir > /dev/null 2>&1 \
     || { echo "Invalid build environment: This is no Git repository" >&2; exit 1; }

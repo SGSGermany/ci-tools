@@ -11,6 +11,9 @@
 
 source "$(dirname "${BASH_SOURCE[0]}")/common-traps.sh.inc"
 
+[ -x "$(which jq 2>/dev/null)" ] \
+    || { echo "Missing CI tools script dependency: jq" >&2; exit 1; }
+
 chkupd_pypi() {
     local IMAGE="$1"
     shift
