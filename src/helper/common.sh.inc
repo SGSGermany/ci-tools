@@ -39,3 +39,23 @@ trunc() {
 sort_semver() {
     sed -e 's/^\([^+~-]*\)\([^+~]*\)\(.*\)$/\1\t\2_\t\3/' | sort -V -r | sed -e 's/_\?\t//g'
 }
+
+_curl() {
+    local RETURN_CODE=0
+    local RESPONSE="$(curl -sSL -i "$@" || { RETURN_CODE=$?; true; })"
+
+    local HEADERS="$(sed -ne '1,/^\r$/{s/\r$//p}' <<< "$RESPONSE")"
+    local BODY="$(sed -e '1,/^\r$/d' <<< "$RESPONSE")"
+
+    local STATUS_CODE="$(sed -ne '1{s#^HTTP/[0-9.]* \([0-9]*\)\( .*\)\?$#\1#p}' <<< "$HEADERS")"
+    if [ -z "$STATUS_CODE" ] || (( $STATUS_CODE < 100 )) || (( $STATUS_CODE >= 300 )); then
+        [ $RETURN_CODE -ne 0 ] || RETURN_CODE=22
+
+        local STATUS_STRING="$(sed -ne '1{s#^HTTP/[0-9.]* \(.*\)$#\1#p}' <<< "$HEADERS")"
+        echo "curl: ($RETURN_CODE) The requested URL returned error: $STATUS_STRING" >&2
+        printf '%s\n' "$BODY" >&2
+    fi
+
+    printf '%s\n\n%s\n' "$HEADERS" "$BODY"
+    return $RETURN_CODE
+}
