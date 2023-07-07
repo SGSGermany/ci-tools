@@ -89,7 +89,9 @@ con_build() {
 
 con_commit() {
     local CONTAINER="$1"
-    local TAGS=( "${@:2}" )
+    local IMAGE="$2"
+    local TAGS=( "${@:3}" )
+    [ ${#TAGS[@]} -gt 0 ] || TAGS=( "latest" )
 
     cmd buildah commit "$CONTAINER" "localhost/$IMAGE:${TAGS[0]}"
     cmd buildah rm "$CONTAINER"
