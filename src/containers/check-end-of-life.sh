@@ -46,6 +46,8 @@ if [ -z "$CYCLE" ]; then
     exit 1
 fi
 
+EXIT_CODE=0
+
 echo + "API_URL=\"https://endoflife.date/api/${PROJECT,,}/${CYCLE,,}.json\"" >&2
 API_URL="https://endoflife.date/api/${PROJECT,,}/${CYCLE,,}.json"
 
@@ -56,20 +58,29 @@ API_RESPONSE="$(sed -e '1,/^$/d' <<< "$API_RESPONSE")"
 echo + "CYCLE_INFO=\"\$(jq . <<< \"\$API_RESPONSE\")\"" >&2
 CYCLE_INFO="$(jq . <<< "$API_RESPONSE")"
 
-echo + "EOL_DATE=\"\$(jq -er $(quote "$JQ_FILTER") <<< \"\$CYCLE_INFO\")\"" >&2
-EOL_DATE="$(jq -er "$JQ_FILTER" <<< "$CYCLE_INFO")"
+echo + "EOL_DATE=\"\$(jq -r $(quote "$JQ_FILTER") <<< \"\$CYCLE_INFO\")\"" >&2
+EOL_DATE="$(jq -r "$JQ_FILTER" <<< "$CYCLE_INFO")"
 
-echo + "CURRENT_DATE=\"\$(date +'%Y-%m-%d')\"" >&2
-CURRENT_DATE="$(date +'%Y-%m-%d')"
+echo + "[[ $(quote "$EOL_DATE") =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]" >&2
+if [[ "$EOL_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+    echo + "CURRENT_DATE=\"\$(date +'%Y-%m-%d')\"" >&2
+    CURRENT_DATE="$(date +'%Y-%m-%d')"
 
-EXIT_CODE=0
-
-echo + "[[ $(quote "$CURRENT_DATE") < $(quote "$EOL_DATE") ]]" >&2
-if [[ "$CURRENT_DATE" < "$EOL_DATE" ]]; then
-    echo "$PROJECT $CYCLE is supported till $EOL_DATE"
+    echo + "[[ $(quote "$CURRENT_DATE") < $(quote "$EOL_DATE") ]]" >&2
+    if [[ "$CURRENT_DATE" < "$EOL_DATE" ]]; then
+        echo "$PROJECT $CYCLE is supported till $EOL_DATE"
+    else
+        echo "$PROJECT $CYCLE has reached its end of life on $EOL_DATE"
+        EXIT_CODE=1
+    fi
 else
-    echo "$PROJECT $CYCLE has reached its end of life on $EOL_DATE"
-    EXIT_CODE=1
+    echo + "[ $(quote "$EOL_DATE") == false ]" >&2
+    if [ "$EOL_DATE" != "false" ]; then
+        echo "Invalid endoflife.date API response: Malformed end-of-life date: $EOL_DATE" >&2
+        exit 1
+    fi
+
+    echo "$PROJECT $CYCLE is still supported"
 fi
 
 LATEST_VERSION="$(jq -r '.latest // empty' <<< "$CYCLE_INFO")"
