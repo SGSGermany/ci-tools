@@ -36,6 +36,12 @@ trunc() {
     done
 }
 
+sponge() {
+    local FILE="$1"
+    local CONTENT="$(cat)"
+    [ -n "$CONTENT" ] && printf '%s\n' "$CONTENT" > "$FILE" || : > "$FILE"
+}
+
 sort_semver() {
     sed -e 's/^\([^+~-]*\)\([^+~]*\)\(.*\)$/\1\t\2_\t\3/' | sort -V -r | sed -e 's/_\?\t//g'
 }
