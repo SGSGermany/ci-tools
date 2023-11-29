@@ -50,7 +50,7 @@ php_install_ext() {
                 ;;
 
             "imap")
-                PACKAGES+=( "imap-dev" )
+                PACKAGES+=( "imap-dev" "openssl-dev" )
                 EXT_CONFIGURES+=( "imap --with-imap-ssl" )
                 EXT_INSTALLS+=( "imap" )
                 ;;
