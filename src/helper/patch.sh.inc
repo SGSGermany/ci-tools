@@ -19,8 +19,8 @@ patch_apply() {
     local CONTAINER="$1"
     local MOUNT="$(buildah mount "$CONTAINER")"
 
-    local DIR="${3:-.}"
-    local DIR_INFO="${4:-$DIR}"
+    local DIR="${2:-.}"
+    local DIR_INFO="${3:-$DIR}"
 
     echo + "rsync -v -rl --exclude .gitignore --exclude '*.patch' $(quote "$DIR_INFO")/ …/" >&2
     rsync -v -rl --exclude '.gitignore' --exclude '*.patch' "$DIR/" "$MOUNT/"
