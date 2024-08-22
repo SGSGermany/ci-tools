@@ -16,6 +16,15 @@ __quote_git() {
     [ -n "$1" ] && [ "$1" != "." ] && echo "git -C $(quote "$1")" || echo "git"
 }
 
+git_ls_tags() {
+    local GIT_REPO="$1"
+    local VERSION="${2:-*}"
+
+    echo + "git ls-remote --refs $(quote "$GIT_REPO") $(quote "refs/tags/$VERSION") | sed …" >&2
+    git ls-remote --refs "$GIT_REPO" "refs/tags/$VERSION" \
+        | sed -ne 's#^[0-9a-f]*\s*refs/tags/\(.*\)$#\1#p'
+}
+
 git_latest() {
     local GIT_REPO="$1"
     local VERSION="${2:-*}"
