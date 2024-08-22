@@ -18,7 +18,7 @@ __quote_git() {
 
 git_latest() {
     local GIT_REPO="$1"
-    local VERSION="$2"
+    local VERSION="${2:-*}"
 
     echo + "VERSION=\"\$(git ls-remote --refs $(quote "$GIT_REPO") $(quote "refs/tags/$VERSION")" \
         "| sed … | sort_semver | head -n 1)\"" >&2
