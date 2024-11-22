@@ -62,8 +62,8 @@ chkeol_api() {
         echo + "CURRENT_DATE=\"\$(date +'%Y-%m-%d')\"" >&2
         local CURRENT_DATE="$(date +'%Y-%m-%d')"
 
-        echo + "[[ $(quote "$CURRENT_DATE") < $(quote "$EOL_DATE") ]]" >&2
-        if [[ "$CURRENT_DATE" < "$EOL_DATE" ]]; then
+        echo + "[[ ! $(quote "$CURRENT_DATE") > $(quote "$EOL_DATE") ]]" >&2
+        if [[ ! "$CURRENT_DATE" > "$EOL_DATE" ]]; then
             echo "$PROJECT $CYCLE is supported till $EOL_DATE"
         else
             echo "$PROJECT $CYCLE has reached its end of life on $EOL_DATE"
