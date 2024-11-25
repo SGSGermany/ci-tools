@@ -9,6 +9,9 @@
 # SPDX-License-Identifier: MIT
 # License-Filename: LICENSE
 
+[ -x "$(which rsync 2>/dev/null)" ] \
+    || { echo "Missing CI tools script dependency: rsync" >&2; exit 1; }
+
 quote() {
     local QUOTED=""
     for ARG in "$@"; do
