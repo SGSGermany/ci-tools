@@ -37,6 +37,12 @@ git_latest() {
         | head -n 1
 }
 
+git_latest_commit() {
+    local GIT_REPO="$1"
+    echo + "COMMIT=\"\$(git ls-remote $(quote "$GIT_REPO") HEAD | cut -f 1)\"" >&2
+    git ls-remote "$GIT_REPO" "HEAD" | cut -f 1
+}
+
 git_clone() {
     local GIT_REPO="$1"
     local GIT_REF="$2"
