@@ -49,6 +49,10 @@ sort_semver() {
     sed -e 's/^\([^+~-]*\)\([^+~]*\)\(.*\)$/\1\t\2_\t\3/' | sort -V -r | sed -e 's/_\?\t//g'
 }
 
+version_greater() {
+    [ "$(printf '%s\n' "$@" | sort_semver | tail -n 1)" != "$1" ]
+}
+
 _curl() {
     local RETURN_CODE=0
     local RESPONSE="$(curl -sSL -i "$@" || { RETURN_CODE=$?; true; })"
