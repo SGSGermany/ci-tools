@@ -9,6 +9,9 @@
 # SPDX-License-Identifier: MIT
 # License-Filename: LICENSE
 
+[ -x "$(which skopeo 2>/dev/null)" ] \
+    || { echo "Missing CI tools script dependency: skopeo" >&2; exit 1; }
+
 chkupd_baseimage() {
     local IMAGE="$1"
     local GENERIC_TAG="$2"
@@ -45,7 +48,7 @@ chkupd_baseimage() {
     local LATEST_BASE_IMAGE_DIGEST="$(skopeo inspect --format '{{.Digest}}' "docker://$BASE_IMAGE" || true)"
 
     if [ -z "$LATEST_BASE_IMAGE_DIGEST" ]; then
-        echo "Failed to inspect latest base image '$BASE_IMAGE': \`skopeo inspect\` failed, likely there was no image with this tag found" >&2
+        echo "Failed to inspect latest base image '$BASE_IMAGE': \`skopeo inspect\` failed, likely because there was no image with this tag found" >&2
         echo "Image rebuild required" >&2
         echo "build"
         return 1
