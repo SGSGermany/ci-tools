@@ -48,7 +48,9 @@ pkg_install() {
             apt-get update
     fi
 
-    cmd buildah run --user root "$CONTAINER" -- \
+    echo + "buildah run --user root $(quote "$CONTAINER") --" \
+        "apt-get install --no-install-recommends --yes $(quote "$@")" >&2
+    buildah run --user root --env DEBIAN_FRONTEND="noninteractive" "$CONTAINER" -- \
         apt-get -o Dpkg::Use-Pty="0" \
             install --no-install-recommends --yes \
             "$@"
@@ -58,7 +60,9 @@ pkg_remove() {
     local CONTAINER="$1"
     shift
 
-    cmd buildah run --user root "$CONTAINER" -- \
+    echo + "buildah run --user root $(quote "$CONTAINER") --" \
+        "apt-get remove --purge --autoremove --yes $(quote "$@")" >&2
+    buildah run --user root --env DEBIAN_FRONTEND="noninteractive" "$CONTAINER" -- \
         apt-get -o Dpkg::Use-Pty="0" \
             remove --purge --autoremove --yes \
             "$@"
