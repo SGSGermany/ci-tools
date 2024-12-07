@@ -9,6 +9,32 @@
 # SPDX-License-Identifier: MIT
 # License-Filename: LICENSE
 
+chkeol_date() {
+    local PROJECT="$1"
+    local CYCLE="$2"
+    local ENDOFLIFE_AFTER="$3"
+    local ENDOFLIFE_TRESHOLD="${4:--3 months}"
+
+    if ! [[ "$ENDOFLIFE_AFTER" =~ ^([1-9][0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$ ]]; then
+        echo "Invalid end of life date: ${ENDOFLIFE_AFTER@Q} doesn't match 'YYYY-MM-DD' format" >&2
+        return 1
+    fi
+
+    local NOTIFY_AFTER="$(date -u -d "${ENDOFLIFE_AFTER}T00:00:00Z $ENDOFLIFE_TRESHOLD" +'%F')"
+    local TODAY="$(date -u -d '00:00:00Z' +'%F')"
+
+    if ! [[ "$TODAY" > "$NOTIFY_AFTER" ]]; then
+        echo "$PROJECT $CYCLE is supported until $ENDOFLIFE_AFTER"
+        return 0
+    elif ! [[ "$TODAY" > "$ENDOFLIFE_AFTER" ]]; then
+        echo "$PROJECT $CYCLE is supported until $ENDOFLIFE_AFTER, but the notification treshold was reached"
+        return 1
+    else
+        echo "$PROJECT $CYCLE reached its end of life on $ENDOFLIFE_AFTER"
+        return 1
+    fi
+}
+
 chkeol_versions() {
     local PATTERN="${1:-^v?([0-9]+\.[0-9]+(\.[0-9]+(\.[0-9]+)?(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?)?)$}"
 
@@ -57,4 +83,3 @@ chkeol_latest_minor() {
         return 1
     fi
 }
-
