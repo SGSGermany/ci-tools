@@ -93,7 +93,7 @@ con_commit() {
     local TAGS=( "${@:3}" )
     [ ${#TAGS[@]} -gt 0 ] || TAGS=( "latest" )
 
-    cmd buildah commit "$CONTAINER" "localhost/$IMAGE:${TAGS[0]}"
+    cmd buildah commit --omit-history "$CONTAINER" "localhost/$IMAGE:${TAGS[0]}"
     cmd buildah rm "$CONTAINER"
 
     for TAG in "${TAGS[@]:1}"; do
