@@ -40,14 +40,3 @@ printf 'export %s="%s"\n' "CI_TOOLS" "SGSGermany"
 
 echo "Setting 'CI_TOOLS_PATH' environment variable: $GIT_DIR/src" >&2
 printf 'export %s="%s"\n' "CI_TOOLS_PATH" "$GIT_DIR/src"
-
-if [ "${GITHUB_ACTIONS:-false}" == "true" ]; then
-    echo "Switching to containers storage driver 'vfs'..." >&2
-    [ -e "${XDG_CONFIG_HOME:-$HOME/.config}/containers" ] \
-        || mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/containers"
-    printf '[storage]\ndriver = "%s"\n' "vfs" \
-        > "${XDG_CONFIG_HOME:-$HOME/.config}/containers/storage.conf"
-
-    echo "Resetting Podman storage..." >&2
-    podman system reset --force >&2
-fi
