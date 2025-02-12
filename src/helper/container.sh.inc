@@ -20,6 +20,8 @@ con_build() {
     local FILE=""
     local FILE_INFO=""
 
+    local OMIT_HISTORY=""
+
     local PARAMS=()
     while [ $# -gt 0 ]; do
         case "$1" in
@@ -44,12 +46,27 @@ con_build() {
                 shift 2
                 ;;
 
+            "--omit-history")
+                if [ $# -lt 2 ]; then
+                    echo "Missing required argument for option '--omit-history': BOOL" >&2
+                    return 1
+                elif [ "$2" != "true" ] && [ "$2" != "false" ]; then
+                    echo "Invalid argument for option '--omit-history': Expecting 'true' or 'false', got ${2@Q}" >&2
+                    return 1
+                fi
+
+                OMIT_HISTORY="$2"
+                shift 2
+                ;;
+
             *)
                 PARAMS+=( "$1" )
                 shift
                 ;;
         esac
     done
+
+    PARAMS+=( --omit-history="${OMIT_HISTORY:-true}" )
 
     if [ -n "$FILE" ]; then
         if [ -f "$FILE" ]; then
