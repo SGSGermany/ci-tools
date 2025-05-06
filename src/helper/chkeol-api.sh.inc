@@ -16,7 +16,7 @@
     || { echo "Missing CI tools script dependency: jq" >&2; exit 1; }
 
 chkeol_api() {
-    local JQ_FILTER=".eol"
+    local JQ_FILTER=".eolFrom"
     if [ "${1:-}" == "--filter" ]; then
         if [ -z "${2:-}" ]; then
             echo "Missing required parameter 'FILTER' for option '--filter'" >&2
@@ -44,15 +44,15 @@ chkeol_api() {
     local CYCLE_INFO
     local EOL_DATE
 
-    echo + "API_URL=\"https://endoflife.date/api/${PROJECT,,}/${CYCLE,,}.json\"" >&2
-    API_URL="https://endoflife.date/api/${PROJECT,,}/${CYCLE,,}.json"
+    echo + "API_URL=\"https://endoflife.date/api/v1/products/${PROJECT,,}/releases/${CYCLE,,}\"" >&2
+    API_URL="https://endoflife.date/api/v1/products/${PROJECT,,}/releases/${CYCLE,,}"
 
     echo + "API_RESPONSE=\"\$(curl -sSL $(quote "$API_URL"))\"" >&2
     API_RESPONSE="$(_curl "$API_URL")"
     API_RESPONSE="$(sed -e '1,/^$/d' <<< "$API_RESPONSE")"
 
-    echo + "CYCLE_INFO=\"\$(jq . <<< \"\$API_RESPONSE\")\"" >&2
-    CYCLE_INFO="$(jq . <<< "$API_RESPONSE")"
+    echo + "CYCLE_INFO=\"\$(jq .result <<< \"\$API_RESPONSE\")\"" >&2
+    CYCLE_INFO="$(jq .result <<< "$API_RESPONSE")"
 
     echo + "EOL_DATE=\"\$(jq -r $(quote "$JQ_FILTER") <<< \"\$CYCLE_INFO\")\"" >&2
     EOL_DATE="$(jq -r "$JQ_FILTER" <<< "$CYCLE_INFO")"
@@ -79,11 +79,11 @@ chkeol_api() {
         echo "$PROJECT $CYCLE is still supported"
     fi
 
-    LATEST_VERSION="$(jq -r '.latest // empty' <<< "$CYCLE_INFO")"
-    LATEST_VERSION_DATE="$(jq -r '.latestReleaseDate // empty' <<< "$CYCLE_INFO")"
-    if [ -n "$LATEST_VERSION" ] && [ -n "$LATEST_VERSION_DATE" ]; then
-        echo "The latest version $LATEST_VERSION was released on $LATEST_VERSION_DATE"
-    fi
+    LATEST_VERSION="$(jq -r '.latest.name // empty' <<< "$CYCLE_INFO")"
+    LATEST_VERSION_DATE="$(jq -r '.latest.date // empty' <<< "$CYCLE_INFO")"
+    [ -z "$LATEST_VERSION" ] || [ -z "$LATEST_VERSION_DATE" ] || echo "The latest version $LATEST_VERSION was released on $LATEST_VERSION_DATE"
+    [ -z "$LATEST_VERSION" ] || [ -n "$LATEST_VERSION_DATE" ] || echo "The latest version is $LATEST_VERSION"
+    [ -n "$LATEST_VERSION" ] || [ -z "$LATEST_VERSION_DATE" ] || echo "The latest version was released on $LATEST_VERSION_DATE"
 
     return $EXIT_CODE
 }
