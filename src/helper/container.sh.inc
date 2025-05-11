@@ -104,6 +104,23 @@ con_build() {
     buildah bud "${PARAMS[@]}" "$CONTEXT"
 }
 
+con_cleanup() {
+    local CONTAINER="$1"
+
+    local CLEANUP_CONFIG=()
+    while IFS= read -r ANNOTATION; do
+        if [[ "$ANNOTATION" == "org.opencontainers.image."* ]]; then
+            CLEANUP_CONFIG+=( --annotation "$ANNOTATION"- )
+        elif [[ "$ANNOTATION" == "com.docker.official-images."* ]]; then
+            CLEANUP_CONFIG+=( --annotation "$ANNOTATION"- )
+        fi
+    done < <(buildah inspect --format '{{ range $k, $_ := .ImageAnnotations }}{{ println $k }}{{ end }}' "$CONTAINER")
+
+    if [ "${#CLEANUP_CONFIG[@]}" -gt 0 ]; then
+        cmd buildah config "${CLEANUP_CONFIG[@]}" "$CONTAINER"
+    fi
+}
+
 con_commit() {
     local CONTAINER="$1"
     local IMAGE="$2"
