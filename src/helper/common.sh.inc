@@ -40,9 +40,14 @@ trunc() {
 }
 
 sponge() {
-    local FILE="$1"
+    local FILE="${1:-}"
     local CONTENT="$(cat)"
-    [ -n "$CONTENT" ] && printf '%s\n' "$CONTENT" > "$FILE" || : > "$FILE"
+
+    if [ -n "$FILE" ] && [ "$FILE" != "-" ]; then
+        [ -n "$CONTENT" ] && printf '%s\n' "$CONTENT" > "$FILE" || : > "$FILE"
+    elif [ -n "$CONTENT" ]; then
+        printf '%s\n' "$CONTENT"
+    fi
 }
 
 sort_semver() {
