@@ -21,6 +21,7 @@ __COMPOSER_GPG_KEYS="161DFBE342889F01DDAC4E61CBB3D576F2A0946F"
 
 php_install_ext() {
     local CONTAINER="$1"
+    local MOUNT="$(buildah mount "$CONTAINER")"
     shift
 
     [ $# -gt 0 ] || return 0
@@ -28,6 +29,11 @@ php_install_ext() {
     local PACKAGES=()
     local EXT_CONFIGURES=()
     local EXT_INSTALLS=()
+    local EXT_ENABLE=()
+    local EXT_DISABLE=()
+    local PECL_INSTALLS=()
+
+    local PHPIZE_DEPS=()
 
     while [ $# -gt 0 ]; do
         case "$1" in
@@ -66,6 +72,12 @@ php_install_ext() {
                 EXT_INSTALLS+=( "ldap" )
                 ;;
 
+            "xdebug")
+                PACKAGES+=( "linux-headers" )
+                PECL_INSTALLS+=( "xdebug" )
+                EXT_DISABLE+=( "docker-php-ext-xdebug.ini" )
+                ;;
+
             "zip")
                 PACKAGES+=( "libzip-dev" )
                 EXT_INSTALLS+=( "zip" )
@@ -85,6 +97,21 @@ php_install_ext() {
             "${PACKAGES[@]}"
     fi
 
+    if [ ${#PECL_INSTALLS[@]} -gt 0 ]; then
+        echo + "PHPIZE_DEPS=( \$(buildah run --user root $(quote "$CONTAINER") -- sh -c 'echo \"\$PHPIZE_DEPS\"') )" >&2
+        PHPIZE_DEPS=( $(buildah run --user root "$CONTAINER" -- sh -c 'echo "$PHPIZE_DEPS"') )
+
+        pkg_install "$CONTAINER" \
+            --virtual .phpize-deps \
+            "${PHPIZE_DEPS[@]}"
+
+        for PECL_INSTALL in "${PECL_INSTALLS[@]}"; do
+            cmd buildah run --user root "$CONTAINER" -- \
+                pecl install "$PECL_INSTALL"
+            EXT_ENABLE+=( "$PECL_INSTALL" )
+        done
+    fi
+
     for EXT_CONFIGURE in "${EXT_CONFIGURES[@]}"; do
         cmd buildah run --user root "$CONTAINER" -- \
             docker-php-ext-configure \
@@ -97,8 +124,26 @@ php_install_ext() {
                 "${EXT_INSTALLS[@]}"
     fi
 
+    if [ ${#EXT_ENABLE[@]} -gt 0 ]; then
+        cmd buildah run --user root "$CONTAINER" -- \
+            docker-php-ext-enable \
+                "${EXT_ENABLE[@]}"
+    fi
+
+    if [ ${#EXT_DISABLE[@]} -gt 0 ]; then
+        for EXT in "${EXT_DISABLE[@]}"; do
+            echo + "[ -f $(quote "…/etc/php/conf.d/$EXT") ]" >&2
+            [ -f "$MOUNT/etc/php/conf.d/$EXT" ] || return 1
+
+            echo + "awk $(quote '!/^(\s*|;.*)$/ { print ";" $0 } /^(\s*|;.*)$/ { print }' "…/etc/php/conf.d/$EXT")" \
+                "| sponge $(quote "…/etc/php/conf.d/$EXT")" >&2
+            awk '!/^(\s*|;.*)$/ { print ";" $0 } /^(\s*|;.*)$/ { print }' "$MOUNT/etc/php/conf.d/$EXT" \
+                | sponge "$MOUNT/etc/php/conf.d/$EXT"
+        done
+    fi
+
     if [ ${#PACKAGES[@]} -gt 0 ]; then
-        echo + "PHP_RUN_DEPS=( \$(buildah run --user root $(quote "$CONTAINER") scanelf --needed --recursive /usr/local/lib/php/extensions …) )" >&2
+        echo + "PHP_RUN_DEPS=( \$(buildah run --user root $(quote "$CONTAINER") -- scanelf --needed --recursive /usr/local/lib/php/extensions …) )" >&2
         local PHP_RUN_DEPS=( $(
             buildah run --user root "$CONTAINER" -- \
                 scanelf --needed --recursive "/usr/local/lib/php/extensions" --nobanner --format '%n#p' \
@@ -115,6 +160,11 @@ php_install_ext() {
 
         pkg_remove "$CONTAINER" \
             .php-build-deps
+    fi
+
+    if [ ${#PHPIZE_DEPS[@]} -gt 0 ]; then
+        pkg_remove "$CONTAINER" \
+            .phpize-deps
     fi
 }
 
