@@ -71,7 +71,7 @@ _curl() {
         [ $RETURN_CODE -ne 0 ] || RETURN_CODE=22
 
         local STATUS_STRING="$(sed -ne '1{s#^HTTP/[0-9.]* \(.*\)$#\1#p}' <<< "$HEADERS_FINAL")"
-        echo "curl: ($RETURN_CODE) The requested URL returned error: $STATUS_STRING" >&2
+        echo "curl: (22) The requested URL '${@: -1}' returned error: $STATUS_STRING" >&2
         printf '%s\n' "$BODY" >&2
     fi
 
