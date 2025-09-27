@@ -27,7 +27,7 @@ github_latest() {
     local RESPONSE="$(_curl "${CURL_HEADERS[@]}" "https://api.github.com/repos/$GITHUB_REPO_IDENT/releases/latest")"
     [ $? -eq 0 ] || return 1
 
-    echo + "sed -e '1,/^$/d' <<< \"\$RESPONSE\" | jq '.tag_name'" >&2
+    echo + "VERSION=\"\$(sed -e '1,/^$/d' <<< \"\$RESPONSE\" | jq '.tag_name')\"" >&2
     sed -e '1,/^$/d' <<< "$RESPONSE" | jq -r '.tag_name'
     [ $? -eq 0 ] || return 1
 }
