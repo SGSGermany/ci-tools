@@ -137,3 +137,38 @@ chkupd_image_version() {
         return 1
     fi
 }
+
+chkupd_image_env_vars() {
+    local IMAGE="$1"
+    shift
+
+    echo + "IMAGE_ID=\"\$(podman pull $(quote "$IMAGE"))\"" >&2
+    local IMAGE_ID="$(podman pull "$IMAGE" || true)"
+
+    if [ -z "$IMAGE_ID" ]; then
+        echo "Failed to pull image '$IMAGE': No image with this tag found" >&2
+        echo "Image rebuild required" >&2
+        echo "build"
+        return 1
+    fi
+
+    echo + "CURRENT_VARS=\"\$(podman image inspect --format '{{range .Config.Env}}{{printf \"%s\n\" .}}{{end}}' $IMAGE_ID)\"" >&2
+    local CURRENT_VARS="$(podman image inspect --format '{{range .Config.Env}}{{printf "%s\n" .}}{{end}}' "$IMAGE_ID" || true)"
+
+    local NAME NAME_ESCAPED CURRENT_VALUE LATEST_VALUE
+    while IFS='=' read -r NAME LATEST_VALUE; do
+        NAME_ESCAPED="$(sed -e 's/[]\/$*.^[]/\\&/g' <<< "$NAME")"
+
+        echo + "CURRENT_VALUE=\"\$(sed -ne $(quote "s/^$NAME_ESCAPED=\(.*\)$/\1/p") <<< \"\$CURRENT_VARS\")\"" >&2
+        CURRENT_VALUE="$(sed -ne "s/^$NAME_ESCAPED=\(.*\)$/\1/p" <<< "$CURRENT_VARS")"
+
+        if [ "$CURRENT_VALUE" != "$LATEST_VALUE" ]; then
+            echo "Image is out of date: Environment variable ${NAME@Q} differs" >&2
+            echo "Current value: $CURRENT_VALUE" >&2
+            echo "Latest value: $LATEST_VALUE" >&2
+            echo "Image rebuild required" >&2
+            echo "build"
+            return 1
+        fi
+    done < <(printf '%s\n' "$@")
+}
