@@ -31,7 +31,10 @@ gpg_recv() {
 
     local KEY
     for KEY in "$@"; do
-        cmd gpg --homedir "$GNUPGHOME" --keyserver "keyserver.ubuntu.com" --recv-key "$1"
+        cmd gpg --homedir "$GNUPGHOME" --keyserver "keyserver.ubuntu.com" --recv-key "$1" \
+            || cmd gpg --homedir "$GNUPGHOME" --keyserver "pgp.mit.edu" --recv-key "$1" \
+            || cmd gpg --homedir "$GNUPGHOME" --keyserver "keyserver.pgp.com" --recv-key "$1" \
+            || cmd gpg --homedir "$GNUPGHOME" --keyserver "keys.openpgp.org" --recv-key "$1"
 
         echo + "gpg --homedir $(quote "$GNUPGHOME") --armor --export $(quote "$1") >> $(quote "$FILE")"
         gpg --homedir "$GNUPGHOME" --armor --export "$1" >> "$FILE"
