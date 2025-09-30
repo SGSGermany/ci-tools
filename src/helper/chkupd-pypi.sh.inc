@@ -42,7 +42,7 @@ chkupd_pypi() {
 
     # install pip
     cmd buildah run --user root "$CONTAINER" -- \
-        apk add --no-cache py3-pip >&2
+        apk add --no-cache py3-pip@community >&2
 
     # check for PyPi package upgrades
     echo + "PACKAGE_UPGRADES=\"\$(buildah run --user root $(quote "$CONTAINER") -- pip list --user --outdated)\"" >&2
@@ -172,7 +172,7 @@ chkupd_pypi_requirements() {
 
     # install pip and jq
     cmd buildah run --user root "$CONTAINER" -- \
-        apk add --no-cache py3-pip jq >&2
+        apk add --no-cache py3-pip@community jq >&2
 
     # check for PyPi package upgrades based on requirements.txt files
     echo + "PACKAGE_UPGRADES=()" >&2
