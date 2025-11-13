@@ -94,8 +94,8 @@ user_add() {
     local NEW_SHELL="${5:-/sbin/nologin}"
 
     cmd buildah run --user root "$CONTAINER" -- \
-        adduser --uid "$NEW_UID" --shell "$NEW_SHELL" --disabled-password \
-            --home "$NEW_HOME" --no-create-home --gecos "" \
+        useradd -u "$NEW_UID" -s "$NEW_SHELL" \
+            -d "$NEW_HOME" -M -c "" \
             "$NEW_USER"
 }
 
