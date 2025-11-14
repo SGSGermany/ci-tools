@@ -19,6 +19,12 @@ __COMPOSER_PHAR="https://getcomposer.org/download/%s/composer.phar"
 __COMPOSER_PHAR_ASC="https://getcomposer.org/download/%s/composer.phar.asc"
 __COMPOSER_GPG_KEYS=( "161DFBE342889F01DDAC4E61CBB3D576F2A0946F" )
 
+__PHIVE_PHAR="https://github.com/phar-io/phive/releases/download/%s/phive-%s.phar"
+__PHIVE_PHAR_ASC="https://github.com/phar-io/phive/releases/download/%s/phive-%s.phar.asc"
+__PHIVE_LATEST_PHAR="https://phar.io/releases/phive.phar"
+__PHIVE_LATEST_PHAR_ASC="https://phar.io/releases/phive.phar.asc"
+__PHIVE_GPG_KEYS=( "0x9D8A98B29B2D5D79" )
+
 php_install_ext() {
     local CONTAINER="$1"
     local MOUNT="$(buildah mount "$CONTAINER")"
@@ -195,6 +201,44 @@ php_composer_install() {
 
 php_composer_remove() {
     local TARGET="${2:-/usr/local/bin/composer}"
+
+    echo + "rm -f …$TARGET"
+    rm -f "$(buildah mount "$1")$TARGET"
+}
+
+php_phive_install() {
+    local CONTAINER="$1"
+
+    local PHIVE_PHAR="$__PHIVE_LATEST_PHAR"
+    local PHIVE_PHAR_ASC="$__PHIVE_LATEST_PHAR_ASC"
+    if [ "${2:-latest}" != "latest" ]; then
+        PHIVE_PHAR="$(printf "$__PHIVE_PHAR" "$2" "$2")"
+        PHIVE_PHAR_ASC="$(printf "$__PHIVE_PHAR_ASC" "$2" "$2")"
+    fi
+
+    local TARGET="${3:-/usr/local/bin/phive}"
+
+    echo + "PHIVE_TMP=\"\$(mktemp -d)\"" >&2
+    local PHIVE_TMP="$(mktemp -d)"
+
+    trap_exit rm -rf "$PHIVE_TMP"
+
+    cmd curl -L -f -o "$PHIVE_TMP/phive.phar" "$PHIVE_PHAR"
+    cmd curl -L -f -o "$PHIVE_TMP/phive.phar.asc" "$PHIVE_PHAR_ASC"
+
+    gpg_recv "$PHIVE_TMP/phive.gpg" "${__PHIVE_GPG_KEYS[@]}"
+
+    gpg_verify "$PHIVE_TMP/phive.phar" "$PHIVE_TMP/phive.phar.asc" "$PHIVE_TMP/phive.gpg"
+
+    echo + "cp $(quote "$PHIVE_TMP/phive.phar") …$TARGET" >&2
+    cp "$PHIVE_TMP/phive.phar" "$(buildah mount "$CONTAINER")$TARGET"
+
+    cmd buildah run --user root "$CONTAINER" -- \
+        chmod +x "$TARGET"
+}
+
+php_phive_remove() {
+    local TARGET="${2:-/usr/local/bin/phive}"
 
     echo + "rm -f …$TARGET"
     rm -f "$(buildah mount "$1")$TARGET"
