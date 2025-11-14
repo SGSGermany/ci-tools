@@ -197,3 +197,33 @@ php_composer_remove() {
     cmd buildah run --user root "$CONTAINER" -- \
         rm -f "/usr/local/bin/composer"
 }
+
+php_patch_config() {
+    local FILE="$(buildah mount "$1")/$2"
+    local CONTENT="$(< "$FILE")"
+    shift 2
+
+    while (( $# >= 2 )); do
+        CONTENT="$(printf '%s\n' "$CONTENT" | awk -v key="$1" -v value="$2" '
+            $0 ~ "^(;[ \t]*)?" key "[ \t]*=" { mlc = NR; found = 1 }
+            mlc != 0 && mlc != NR { print key " = " value; mlc = 0 }
+            mlc == 0 { print }
+            END { if (mlc != 0 || found == 0) { print key " = " value } }
+        ' -)"
+        shift 2
+    done
+
+    [ -n "$CONTENT" ] && printf '%s\n' "$CONTENT" > "$FILE" || : > "$FILE"
+}
+
+php_patch_config_list() {
+    local FILE="$(buildah mount "$1")/$2"
+    shift 2
+
+    awk -v key="$1" -v lines="$(printf "%s\n" "${@:2}")" '
+        $0 ~ "^(;[ \t]*)?" key "\\[" { mlc = NR; found = 1 }
+        mlc != 0 && mlc != NR { print lines; mlc = 0 }
+        mlc == 0 { print }
+        END { if (mlc != 0 || found == 0) { print lines } }
+    ' "$FILE" | sponge "$FILE"
+}
