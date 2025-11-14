@@ -251,8 +251,8 @@ php_patch_config() {
 
     while (( $# >= 2 )); do
         CONTENT="$(printf '%s\n' "$CONTENT" | awk -v key="$1" -v value="$2" '
-            $0 ~ "^(;[ \t]*)?" key "[ \t]*=" { mlc = NR; found = 1 }
-            mlc != 0 && mlc != NR { print key " = " value; mlc = 0 }
+            $0 ~ "^(;[ \t]*)?" key "[ \t]*=" { mlc = NR * !found }
+            mlc != 0 && mlc != NR { print key " = " value; found = 1; mlc = 0 }
             mlc == 0 { print }
             END { if (mlc != 0 || found == 0) { print key " = " value } }
         ' -)"
@@ -267,8 +267,8 @@ php_patch_config_list() {
     shift 2
 
     awk -v key="$1" -v lines="$(printf "%s\n" "${@:2}")" '
-        $0 ~ "^(;[ \t]*)?" key "\\[" { mlc = NR; found = 1 }
-        mlc != 0 && mlc != NR { print lines; mlc = 0 }
+        $0 ~ "^(;[ \t]*)?" key "\\[" { mlc = NR * !found }
+        mlc != 0 && mlc != NR { print lines; found = 1; mlc = 0 }
         mlc == 0 { print }
         END { if (mlc != 0 || found == 0) { print lines } }
     ' "$FILE" | sponge "$FILE"
