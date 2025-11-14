@@ -15,9 +15,9 @@ source "$(dirname "${BASH_SOURCE[0]}")/gpg.sh.inc"
 [ -x "$(which curl 2>/dev/null)" ] \
     || { echo "Missing CI tools script dependency: curl" >&2; exit 1; }
 
-__COMPOSER_PHAR="https://getcomposer.org/download/latest-stable/composer.phar"
-__COMPOSER_PHAR_ASC="https://getcomposer.org/download/latest-stable/composer.phar.asc"
-__COMPOSER_GPG_KEYS="161DFBE342889F01DDAC4E61CBB3D576F2A0946F"
+__COMPOSER_PHAR="https://getcomposer.org/download/%s/composer.phar"
+__COMPOSER_PHAR_ASC="https://getcomposer.org/download/%s/composer.phar.asc"
+__COMPOSER_GPG_KEYS=( "161DFBE342889F01DDAC4E61CBB3D576F2A0946F" )
 
 php_install_ext() {
     local CONTAINER="$1"
@@ -170,32 +170,34 @@ php_install_ext() {
 
 php_composer_install() {
     local CONTAINER="$1"
-    local MOUNT="$(buildah mount "$CONTAINER")"
+    local COMPOSER_PHAR="$(printf "$__COMPOSER_PHAR" "${2:-latest-stable}")"
+    local COMPOSER_PHAR_ASC="$(printf "$__COMPOSER_PHAR_ASC" "${2:-latest-stable}")"
+    local TARGET="${3:-/usr/local/bin/composer}"
 
     echo + "COMPOSER_TMP=\"\$(mktemp -d)\"" >&2
     local COMPOSER_TMP="$(mktemp -d)"
 
     trap_exit rm -rf "$COMPOSER_TMP"
 
-    cmd curl -L -f -o "$COMPOSER_TMP/composer.phar" "$__COMPOSER_PHAR"
-    cmd curl -L -f -o "$COMPOSER_TMP/composer.phar.asc" "$__COMPOSER_PHAR_ASC"
+    cmd curl -L -f -o "$COMPOSER_TMP/composer.phar" "$COMPOSER_PHAR"
+    cmd curl -L -f -o "$COMPOSER_TMP/composer.phar.asc" "$COMPOSER_PHAR_ASC"
 
-    gpg_recv "$COMPOSER_TMP/composer.gpg" $__COMPOSER_GPG_KEYS
+    gpg_recv "$COMPOSER_TMP/composer.gpg" "${__COMPOSER_GPG_KEYS[@]}"
 
     gpg_verify "$COMPOSER_TMP/composer.phar" "$COMPOSER_TMP/composer.phar.asc" "$COMPOSER_TMP/composer.gpg"
 
-    echo + "cp $(quote "$COMPOSER_TMP/composer.phar") …/usr/local/bin/composer" >&2
-    cp "$COMPOSER_TMP/composer.phar" "$MOUNT/usr/local/bin/composer"
+    echo + "cp $(quote "$COMPOSER_TMP/composer.phar") …$TARGET" >&2
+    cp "$COMPOSER_TMP/composer.phar" "$(buildah mount "$CONTAINER")$TARGET"
 
     cmd buildah run --user root "$CONTAINER" -- \
-        chmod +x "/usr/local/bin/composer"
+        chmod +x "$TARGET"
 }
 
 php_composer_remove() {
-    local CONTAINER="$1"
+    local TARGET="${2:-/usr/local/bin/composer}"
 
-    cmd buildah run --user root "$CONTAINER" -- \
-        rm -f "/usr/local/bin/composer"
+    echo + "rm -f …$TARGET"
+    rm -f "$(buildah mount "$1")$TARGET"
 }
 
 php_patch_config() {
