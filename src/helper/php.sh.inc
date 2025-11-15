@@ -15,6 +15,8 @@ source "$(dirname "${BASH_SOURCE[0]}")/gpg.sh.inc"
 [ -x "$(which curl 2>/dev/null)" ] \
     || { echo "Missing CI tools script dependency: curl" >&2; exit 1; }
 
+__PIE_PHAR="https://github.com/php/pie/releases/latest/download/pie.phar"
+
 __COMPOSER_PHAR="https://getcomposer.org/download/%s/composer.phar"
 __COMPOSER_PHAR_ASC="https://getcomposer.org/download/%s/composer.phar.asc"
 __COMPOSER_GPG_KEYS=( "161DFBE342889F01DDAC4E61CBB3D576F2A0946F" )
@@ -172,6 +174,25 @@ php_install_ext() {
         pkg_remove "$CONTAINER" \
             .phpize-deps
     fi
+}
+
+php_pie_install() {
+    local CONTAINER="$1"
+    local PIE_PHAR="$(printf "$__PIE_PHAR" "${2:-latest}")"
+    local TARGET="${3:-/usr/local/bin/pie}"
+
+    echo + "curl -L -f -o $(quote "…$TARGET") $(quote "$PIE_PHAR")"
+    curl -L -f -o "$(buildah mount "$CONTAINER")$TARGET" "$PIE_PHAR"
+
+    cmd buildah run --user root "$CONTAINER" -- \
+        chmod +x "$TARGET"
+}
+
+php_pie_remove() {
+    local TARGET="${2:-/usr/local/bin/pie}"
+
+    echo + "rm -f …$TARGET"
+    rm -f "$(buildah mount "$1")$TARGET"
 }
 
 php_composer_install() {
