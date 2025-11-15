@@ -91,10 +91,13 @@ user_add() {
     local NEW_USER="$2"
     local NEW_UID="$3"
     local NEW_HOME="${4:-/}"
-    local NEW_SHELL="${5:-/sbin/nologin}"
+    local NEW_SHELL="${5:-/usr/sbin/nologin}"
 
     cmd buildah run --user root "$CONTAINER" -- \
-        useradd -u "$NEW_UID" -s "$NEW_SHELL" \
+        groupadd -g "$NEW_UID" "$NEW_USER"
+
+    cmd buildah run --user root "$CONTAINER" -- \
+        useradd -u "$NEW_UID" -g "$NEW_UID" -s "$NEW_SHELL" \
             -d "$NEW_HOME" -M -c "" \
             "$NEW_USER"
 }
