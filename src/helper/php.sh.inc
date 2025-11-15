@@ -254,7 +254,7 @@ php_patch_config() {
             $0 ~ "^(;[ \t]*)?" key "[ \t]*=" { mlc = NR * !found }
             mlc != 0 && mlc != NR { print key " = " value; found = 1; mlc = 0 }
             mlc == 0 { print }
-            END { if (mlc != 0 || found == 0) { print key " = " value } }
+            END { if (mlc != 0) { print key " = " value } }
         ' -)"
         shift 2
     done
@@ -270,6 +270,6 @@ php_patch_config_list() {
         $0 ~ "^(;[ \t]*)?" key "\\[" { mlc = NR * !found }
         mlc != 0 && mlc != NR { print lines; found = 1; mlc = 0 }
         mlc == 0 { print }
-        END { if (mlc != 0 || found == 0) { print lines } }
+        END { if (mlc != 0) { print lines } }
     ' "$FILE" | sponge "$FILE"
 }
