@@ -9,52 +9,46 @@
 # SPDX-License-Identifier: MIT
 # License-Filename: LICENSE
 
+source "$(dirname "${BASH_SOURCE[0]}")/common-traps.sh.inc"
+
 con_build() {
     local CONTEXT="${@: -2:1}"
     local CONTEXT_INFO="${@: -1}"
     set -- "${@:1:$#-2}"
 
-    local ORIG_BASE_IMAGE_PATTERN=""
-    local ORIG_BASE_IMAGE=""
-
-    local FILE=""
-    local FILE_INFO=""
-
-    local OMIT_HISTORY=""
-
+    local IMAGE=
+    local ORIG_BASE_IMAGE_PATTERN=
+    local ORIG_BASE_IMAGE=
+    local FILE=
+    local FILE_INFO=
+    local OMIT_HISTORY=
     local PARAMS=()
+
     while [ $# -gt 0 ]; do
         case "$1" in
-            "--check-from")
-                if [ $# -lt 2 ]; then
-                    echo "Missing required argument for option '--check-from': IMAGE_PATTERN" >&2
-                    return 1
-                fi
+            "-t"|"--tag")
+                [ $# -gt 1 ] || { echo "Missing required argument for option '--tag'" >&2; return 1; }
+                IMAGE="$2"
+                shift 2
+                ;;
 
+            "--check-from")
+                [ $# -gt 1 ] || { echo "Missing required argument for option '--check-from'" >&2; return 1; }
                 ORIG_BASE_IMAGE_PATTERN="$2"
                 shift 2
                 ;;
 
             "-f"|"--file")
-                if [ $# -lt 2 ]; then
-                    echo "Missing required argument for option '--file': CONTAINERFILE" >&2
-                    return 1
-                fi
-
+                [ $# -gt 1 ] || { echo "Missing required argument for option '--file'" >&2; return 1; }
                 [ -n "$FILE" ] || FILE="$2"
                 PARAMS+=( --file "$2" )
                 shift 2
                 ;;
 
             "--omit-history")
-                if [ $# -lt 2 ]; then
-                    echo "Missing required argument for option '--omit-history': BOOL" >&2
-                    return 1
-                elif [ "$2" != "true" ] && [ "$2" != "false" ]; then
-                    echo "Invalid argument for option '--omit-history': Expecting 'true' or 'false', got ${2@Q}" >&2
-                    return 1
-                fi
-
+                [ $# -gt 1 ] || { echo "Missing required argument for option '--omit-history'" >&2; return 1; }
+                [ "$2" == "true" ] || [ "$2" == "false" ] \
+                    || { echo "Invalid argument for option '--omit-history': $2" >&2; return 1; }
                 OMIT_HISTORY="$2"
                 shift 2
                 ;;
@@ -66,6 +60,9 @@ con_build() {
         esac
     done
 
+    [ -n "$IMAGE" ] || { echo "Missing required option: --tag" >&2; return 1; }
+
+    PARAMS+=( --tag "$IMAGE" )
     PARAMS+=( --omit-history="${OMIT_HISTORY:-true}" )
 
     if [ -n "$FILE" ]; then
@@ -102,6 +99,8 @@ con_build() {
 
     echo + "buildah bud $(quote "${PARAMS[@]}") $(quote "$CONTEXT_INFO")" >&2
     buildah bud "${PARAMS[@]}" "$CONTEXT"
+
+    trap_exit podman rmi "$IMAGE"
 }
 
 con_cleanup() {
