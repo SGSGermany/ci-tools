@@ -272,13 +272,14 @@ php_patch_config() {
 
     local LINES=
     while (( $# >= 2 )); do
-        LINES="$(printf '%s\n' "$2" | awk -v key="$1" '/^./ { print key " = " $0 }' -)"
-        CONTENT="$(printf '%s\n' "$CONTENT" | awk -v key="$1" -v lines="$LINES" '
+        LINES="$(awk -v key="$1" '/^./ { print key " = " $0 }' - <<< "$2")"
+        CONTENT="$(awk -v key="$1" -v lines="$LINES" '
+            BEGIN { gsub(/[][(){}.*+?^$|\\]/, "\\\\&", key) }
             $0 ~ "^(;[ \t]*)?" key "[ \t]*=" { mlc = NR * !found }
             mlc != 0 && mlc != NR { print lines; found = 1; mlc = 0 }
             mlc == 0 { print }
             END { if (mlc != 0) { print lines } }
-        ' -)"
+        ' - <<< "$CONTENT")"
         shift 2
     done
 
