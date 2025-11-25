@@ -287,13 +287,28 @@ php_patch_config() {
 }
 
 php_patch_config_list() {
+    local APPEND=
+    [ "$1" != "-a" ] || { APPEND="1"; shift; }
     local FILE="$(buildah mount "$1")/$2"
-    shift 2
+    local CONTENT="$(< "$FILE")"
+    local KEYS="$3"
+    shift 3
 
-    awk -v key="$1" -v lines="$(printf "%s\n" "${@:2}")" '
-        $0 ~ "^(;[ \t]*)?" key "\\[" { mlc = NR * !found }
-        mlc != 0 && mlc != NR { print lines; found = 1; mlc = 0 }
-        mlc == 0 { print }
-        END { if (mlc != 0) { print lines } }
-    ' "$FILE" | sponge "$FILE"
+    local LINES=
+    while (( $# >= 2 )); do
+        LINES="$(awk -v key="$1" '/^./ { print key " = " $0 }' - <<< "$2")"
+        CONTENT="$(awk -v keys="$KEYS" -v key="$1" -v lines="$LINES" -v append="$APPEND" '
+            BEGIN { gsub(/[][(){}.*+?^$|\\]/, "\\\\&", key) }
+            $0 ~ "^(;[ \t]*)?" keys "\\[" { mlc = NR * !found_keys }
+            $0 ~ "^(;[ \t]*)?" key "[ \t]*=" { rlc = NR * !found_key * !!mlc }
+            rlc != 0 && rlc != NR { print lines; found_key = 1; rlc = 0 }
+            mlc != 0 && mlc != NR { if (!found_key) { print lines }; found_keys = 1; mlc = 0 }
+            mlc == 0 || append { if (rlc == 0) { print } }
+            END { if (mlc != 0 || rlc != 0) { print lines } }
+        ' - <<< "$CONTENT")"
+        APPEND="1"
+        shift 2
+    done
+
+    [ -n "$CONTENT" ] && printf '%s\n' "$CONTENT" > "$FILE" || : > "$FILE"
 }
