@@ -304,7 +304,7 @@ php_patch_config_list() {
             rlc != 0 && rlc != NR { print lines; found_key = 1; rlc = 0 }
             mlc != 0 && mlc != NR { if (!found_key) { print lines }; found_keys = 1; mlc = 0 }
             mlc == 0 || append { if (rlc == 0) { print } }
-            END { if (mlc != 0 || rlc != 0) { print lines } }
+            END { if (mlc != 0 && !found_key) { print lines } }
         ' - <<< "$CONTENT")"
         APPEND="1"
         shift 2
