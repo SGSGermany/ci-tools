@@ -16,6 +16,7 @@ con_build() {
     local CONTEXT_INFO="${@: -1}"
     set -- "${@:1:$#-2}"
 
+    local NO_CLEANUP=
     local IMAGE=
     local ORIG_BASE_IMAGE_PATTERN=
     local ORIG_BASE_IMAGE=
@@ -26,6 +27,11 @@ con_build() {
 
     while [ $# -gt 0 ]; do
         case "$1" in
+            "--no-cleanup")
+                NO_CLEANUP="y"
+                shift
+                ;;
+
             "-t"|"--tag")
                 [ $# -gt 1 ] || { echo "Missing required argument for option '--tag'" >&2; return 1; }
                 IMAGE="$2"
@@ -100,7 +106,7 @@ con_build() {
     echo + "buildah bud $(quote "${PARAMS[@]}") $(quote "$CONTEXT_INFO")" >&2
     buildah bud "${PARAMS[@]}" "$CONTEXT"
 
-    trap_exit podman rmi "$IMAGE"
+    [ -n "$NO_CLEANUP" ] || trap_exit podman rmi "$IMAGE"
 }
 
 con_cleanup() {
