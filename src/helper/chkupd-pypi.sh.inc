@@ -103,7 +103,7 @@ chkupd_pypi_dependencies() {
     for PACKAGE in "$@"; do
         # get metadata file of package
         echo + "METADATA=\"\$(buildah run --user root $(quote "$CONTAINER") -- pip show $(quote "$PACKAGE")" \
-            "| awk -F': ' '/^Name: / {n=$2} /^Version: / {v=\$2} /^Location: / {l=\$2} END {print l \"/\" n \"-\" v \".dist-info/METADATA\"}')\"" >&2
+            "| awk -F': ' '/^Name: / {n=\$2} /^Version: / {v=\$2} /^Location: / {l=\$2} END {print l \"/\" n \"-\" v \".dist-info/METADATA\"}')\"" >&2
         METADATA="$(buildah run --user root "$CONTAINER" -- pip show "$PACKAGE" \
             | awk -F': ' '/^Name: / {n=$2} /^Version: / {v=$2} /^Location: / {l=$2} END {print l "/" n "-" v ".dist-info/METADATA"}')"
 
@@ -115,7 +115,7 @@ chkupd_pypi_dependencies() {
 
         # read version constraints from metadata file and add everything to package list
         echo + "for DEPENDENCY in \"\${DEPENDENCIES[@]}\"; do PACKAGES+=( \"\$(awk -v pkg=\"\$DEPENDENCY\"" \
-            "-F': ' '\$0 ~ \"^Requires-Dist: \" pkg {print $2}' $(quote "…/$METADATA"))\" ); done" >&2
+            "-F': ' '\$0 ~ \"^Requires-Dist: \" pkg {print \$2}' $(quote "…/$METADATA"))\" ); done" >&2
         for DEPENDENCY in "${DEPENDENCIES[@]}"; do
             PACKAGES+=( "$(awk -v pkg="$DEPENDENCY" -F': ' '$0 ~ "^Requires-Dist: " pkg {print $2}' "$MOUNT/$METADATA")" )
         done
