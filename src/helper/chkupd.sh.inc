@@ -9,7 +9,7 @@
 # SPDX-License-Identifier: MIT
 # License-Filename: LICENSE
 
-[ -x "$(which skopeo 2>/dev/null)" ] \
+[ -x "$(type -P skopeo 2>/dev/null)" ] \
     || { echo "Missing CI tools script dependency: skopeo" >&2; exit 1; }
 
 chkupd_baseimage() {

@@ -11,7 +11,7 @@
 
 source "$(dirname "${BASH_SOURCE[0]}")/common-traps.sh.inc"
 
-[ -x "$(which gpg 2>/dev/null)" ] \
+[ -x "$(type -P gpg 2>/dev/null)" ] \
     || { echo "Missing CI tools script dependency: gpg" >&2; exit 1; }
 
 gpg_recv() {

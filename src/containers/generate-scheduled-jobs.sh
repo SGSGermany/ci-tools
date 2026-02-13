@@ -21,7 +21,7 @@ export LC_ALL=C.UTF-8
 
 source "$CI_TOOLS_PATH/helper/common.sh.inc"
 
-[ -x "$(which git 2>/dev/null)" ] \
+[ -x "$(type -P git 2>/dev/null)" ] \
     || { echo "Missing CI tools script dependency: git" >&2; exit 1; }
 
 [ -v GIT_REMOTE_URL ] && [ -n "$GIT_REMOTE_URL" ] \

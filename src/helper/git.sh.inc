@@ -9,7 +9,7 @@
 # SPDX-License-Identifier: MIT
 # License-Filename: LICENSE
 
-[ -x "$(which git 2>/dev/null)" ] \
+[ -x "$(type -P git 2>/dev/null)" ] \
     || { echo "Missing CI tools script dependency: git" >&2; exit 1; }
 
 __quote_git() {
