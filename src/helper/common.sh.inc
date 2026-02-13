@@ -59,8 +59,11 @@ version_greater() {
 }
 
 _curl() {
-    local RETURN_CODE=0
-    local RESPONSE="$(curl -sSL -i "$@" || { RETURN_CODE=$?; true; })"
+    local RESPONSE RETURN_CODE
+    RESPONSE="$(curl -sSL -i "$@")"
+    RETURN_CODE=$?
+
+    [ $RETURN_CODE -eq 0 ] || return $RETURN_CODE
 
     local HEADERS="$(awk '{ sub(/\r$/, "") } /^HTTP\/[0-9.]+ ([0-9]+)( .*)?$/{ header=1 } header{ print } /^$/{ header=0 }' <<< "$RESPONSE")"
     local HEADERS_FINAL="$(awk '/^HTTP\/[0-9.]+ ([0-9]+)( .*)?$/{ headers="" } { headers=headers $0 "\n" } END{ print headers }' <<< "$HEADERS")"
@@ -80,8 +83,10 @@ _curl() {
 }
 
 _curl_json() {
-    local RETURN_CODE=0
-    local RESPONSE="$(_curl -H "Accept: application/json" "$@" || { RETURN_CODE=$?; true; })"
+    local RESPONSE RETURN_CODE
+    RESPONSE="$(_curl -H "Accept: application/json" "$@")"
+    RETURN_CODE=$?
+
     [ $RETURN_CODE -eq 0 ] || return $RETURN_CODE
 
     RESPONSE="$(sed -e '1,/^$/d' <<< "$RESPONSE")"

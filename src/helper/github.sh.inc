@@ -18,13 +18,13 @@
 github_latest() {
     local GITHUB_REPO_IDENT="$1"
 
-    local CURL_HEADERS=()
+    local RESPONSE CURL_HEADERS=()
     CURL_HEADERS+=( -H "X-GitHub-Api-Version: 2022-11-28" )
     CURL_HEADERS+=( -H "Accept: application/vnd.github+json" )
     [ -z "${GITHUB_TOKEN:-}" ] || CURL_HEADERS=( -H "Authorization: Bearer $GITHUB_TOKEN" )
 
     echo + "RESPONSE=\"\$(curl -sSL $(quote "https://api.github.com/repos/$GITHUB_REPO_IDENT/releases/latest"))\"" >&2
-    local RESPONSE="$(_curl "${CURL_HEADERS[@]}" "https://api.github.com/repos/$GITHUB_REPO_IDENT/releases/latest")"
+    RESPONSE="$(_curl "${CURL_HEADERS[@]}" "https://api.github.com/repos/$GITHUB_REPO_IDENT/releases/latest")"
     [ $? -eq 0 ] || return 1
 
     echo + "VERSION=\"\$(sed -e '1,/^$/d' <<< \"\$RESPONSE\" | jq '.tag_name')\"" >&2

@@ -52,7 +52,7 @@ chkeol_api() {
     API_RESPONSE="$(sed -e '1,/^$/d' <<< "$API_RESPONSE")"
 
     echo + "CYCLE_INFO=\"\$(jq .result <<< \"\$API_RESPONSE\")\"" >&2
-    CYCLE_INFO="$(jq .result <<< "$API_RESPONSE")"
+    CYCLE_INFO="$(jq '.result // empty' <<< "$API_RESPONSE")"
 
     if [ -z "$CYCLE_INFO" ]; then
         echo "Invalid endoflife.date API response: Malformed result" >&2

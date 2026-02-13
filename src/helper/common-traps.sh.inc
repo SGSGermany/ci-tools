@@ -16,7 +16,7 @@ function trap_exit {
 }
 
 function trap_exit_exec {
-    EXIT=$?
+    local EXIT=$?
 
     for (( INDEX=${#TRAPS_EXIT[@]}-1 ; INDEX >= 0 ; INDEX-- )); do
         echo + "${TRAPS_EXIT[$INDEX]}" >&2
