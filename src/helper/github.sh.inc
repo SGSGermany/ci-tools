@@ -23,11 +23,9 @@ github_latest() {
     CURL_HEADERS+=( -H "Accept: application/vnd.github+json" )
     [ -z "${GITHUB_TOKEN:-}" ] || CURL_HEADERS=( -H "Authorization: Bearer $GITHUB_TOKEN" )
 
-    echo + "RESPONSE=\"\$(curl -sSL $(quote "https://api.github.com/repos/$GITHUB_REPO_IDENT/releases/latest"))\"" >&2
-    RESPONSE="$(_curl "${CURL_HEADERS[@]}" "https://api.github.com/repos/$GITHUB_REPO_IDENT/releases/latest")"
-    [ $? -eq 0 ] || return 1
+    echo + "RESPONSE=\"\$(_curl_json $(quote "https://api.github.com/repos/$GITHUB_REPO_IDENT/releases/latest"))\"" >&2
+    RESPONSE="$(_curl_json "${CURL_HEADERS[@]}" "https://api.github.com/repos/$GITHUB_REPO_IDENT/releases/latest")"
 
-    echo + "VERSION=\"\$(sed -e '1,/^$/d' <<< \"\$RESPONSE\" | jq '.tag_name')\"" >&2
-    sed -e '1,/^$/d' <<< "$RESPONSE" | jq -r '.tag_name'
-    [ $? -eq 0 ] || return 1
+    echo + "jq -er '.tag_name' <<< \"\$RESPONSE\"" >&2
+    jq -er '.tag_name' <<< "$RESPONSE"
 }

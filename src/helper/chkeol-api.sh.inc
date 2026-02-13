@@ -47,9 +47,8 @@ chkeol_api() {
     echo + "API_URL=\"https://endoflife.date/api/v1/products/${PROJECT,,}/releases/${CYCLE,,}\"" >&2
     API_URL="https://endoflife.date/api/v1/products/${PROJECT,,}/releases/${CYCLE,,}"
 
-    echo + "API_RESPONSE=\"\$(curl -sSL $(quote "$API_URL"))\"" >&2
-    API_RESPONSE="$(_curl "$API_URL")"
-    API_RESPONSE="$(sed -e '1,/^$/d' <<< "$API_RESPONSE")"
+    echo + "API_RESPONSE=\"\$(_curl_json $(quote "$API_URL"))\"" >&2
+    API_RESPONSE="$(_curl_json "$API_URL")"
 
     echo + "CYCLE_INFO=\"\$(jq .result <<< \"\$API_RESPONSE\")\"" >&2
     CYCLE_INFO="$(jq '.result // empty' <<< "$API_RESPONSE")"
