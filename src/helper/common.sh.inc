@@ -78,3 +78,19 @@ _curl() {
     printf '%s\n\n%s\n' "$HEADERS_FINAL" "$BODY"
     return $RETURN_CODE
 }
+
+_curl_json() {
+    local RETURN_CODE=0
+    local RESPONSE="$(_curl -H "Accept: application/json" "$@" || { RETURN_CODE=$?; true; })"
+    [ $RETURN_CODE -eq 0 ] || return $RETURN_CODE
+
+    RESPONSE="$(sed -e '1,/^$/d' <<< "$RESPONSE")"
+    if ! jq -e '.' &> /dev/null <<< "$RESPONSE"; then
+        echo "curl: (22) The requested URL '${@: -1}' returned a malformed JSON response" >&2
+        printf '%s\n' "$RESPONSE" >&2
+        RETURN_CODE=22
+    fi
+
+    printf '%s\n' "$RESPONSE"
+    return $RETURN_CODE
+}
