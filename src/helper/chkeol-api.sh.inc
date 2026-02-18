@@ -16,15 +16,15 @@
     || { echo "Missing CI tools script dependency: jq" >&2; exit 1; }
 
 chkeol_api() {
-    local JQ_FILTER=".eolFrom"
+    local JQ_STATUS_FILTER=".isMaintained | not"
+    local JQ_DATE_FILTER=".eolFrom"
     if [ "${1:-}" == "--filter" ]; then
-        if [ -z "${2:-}" ]; then
-            echo "Missing required parameter 'FILTER' for option '--filter'" >&2
-            return 1
-        fi
+        [ -n "${2:-}" ] || { echo "Missing required parameter 'STATUS' for option '--filter'" >&2; return 1; }
+        [ -n "${3:-}" ] || { echo "Missing required parameter 'DATE' for option '--filter'" >&2; return 1; }
 
-        JQ_FILTER="$2"
-        shift 2
+        JQ_STATUS_FILTER="$2"
+        JQ_DATE_FILTER="$3"
+        shift 3
     fi
 
     local PROJECT="${1:-}"
@@ -42,7 +42,7 @@ chkeol_api() {
     local EXIT_CODE=0
     local API_URL API_RESPONSE
     local CYCLE_INFO
-    local MAINTAINED EOL_DATE CURRENT_DATE
+    local EOL_STATUS EOL_DATE CURRENT_DATE
 
     echo + "API_URL=\"https://endoflife.date/api/v1/products/${PROJECT,,}/releases/${CYCLE,,}\"" >&2
     API_URL="https://endoflife.date/api/v1/products/${PROJECT,,}/releases/${CYCLE,,}"
@@ -58,16 +58,16 @@ chkeol_api() {
         return 1
     fi
 
-    echo + "MAINTAINED=\"\$(jq -r .isMaintained <<< \"\$CYCLE_INFO\")\"" >&2
-    MAINTAINED="$(jq -r .isMaintained <<< "$CYCLE_INFO")"
+    echo + "EOL_STATUS=\"\$(jq -r $(quote "$JQ_STATUS_FILTER") <<< \"\$CYCLE_INFO\")\"" >&2
+    EOL_STATUS="$(jq -r "$JQ_STATUS_FILTER" <<< "$CYCLE_INFO")"
 
-    if [ "$MAINTAINED" != "true" ] && [ "$MAINTAINED" != "false" ]; then
-        echo "Invalid endoflife.date API response: Malformed support status: $MAINTAINED" >&2
+    if [ "$EOL_STATUS" != "true" ] && [ "$EOL_STATUS" != "false" ]; then
+        echo "Invalid endoflife.date API response: Malformed support status: $EOL_STATUS" >&2
         return 1
     fi
 
-    echo + "EOL_DATE=\"\$(jq -r $(quote "$JQ_FILTER") <<< \"\$CYCLE_INFO\")\"" >&2
-    EOL_DATE="$(jq -r "$JQ_FILTER" <<< "$CYCLE_INFO")"
+    echo + "EOL_DATE=\"\$(jq -r $(quote "$JQ_DATE_FILTER") <<< \"\$CYCLE_INFO\")\"" >&2
+    EOL_DATE="$(jq -r "$JQ_DATE_FILTER" <<< "$CYCLE_INFO")"
 
     if [ "$EOL_DATE" != "null" ] && [[ ! "$EOL_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
         echo "Invalid endoflife.date API response: Malformed end-of-life date: $EOL_DATE" >&2
@@ -77,7 +77,7 @@ chkeol_api() {
     echo + "CURRENT_DATE=\"\$(date +'%Y-%m-%d')\"" >&2
     CURRENT_DATE="$(date +'%Y-%m-%d')"
 
-    if [ "$MAINTAINED" == "true" ]; then
+    if [ "$EOL_STATUS" == "false" ]; then
         if [ "$EOL_DATE" == "null" ]; then
             echo "$PROJECT $CYCLE is still supported"
         elif [[ ! "$CURRENT_DATE" > "$EOL_DATE" ]]; then
