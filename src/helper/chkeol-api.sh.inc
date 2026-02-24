@@ -16,7 +16,7 @@
     || { echo "Missing CI tools script dependency: jq" >&2; exit 1; }
 
 chkeol_api() {
-    local JQ_STATUS_FILTER=".isMaintained | not"
+    local JQ_STATUS_FILTER=".isEol"
     local JQ_DATE_FILTER=".eolFrom"
     if [ "${1:-}" == "--filter" ]; then
         [ -n "${2:-}" ] || { echo "Missing required parameter 'STATUS' for option '--filter'" >&2; return 1; }
