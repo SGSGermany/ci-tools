@@ -113,13 +113,21 @@ con_cleanup() {
     local CONTAINER="$1"
 
     local CLEANUP_CONFIG=()
-    while IFS= read -r ANNOTATION; do
-        if [[ "$ANNOTATION" == "org.opencontainers.image."* ]]; then
-            CLEANUP_CONFIG+=( --annotation "$ANNOTATION"- )
-        elif [[ "$ANNOTATION" == "com.docker.official-images."* ]]; then
-            CLEANUP_CONFIG+=( --annotation "$ANNOTATION"- )
-        fi
-    done < <(buildah inspect --format '{{ range $k, $_ := .ImageAnnotations }}{{ println $k }}{{ end }}' "$CONTAINER")
+    __con_cleanup_inner() {
+        local TYPE="$1"
+        local FILTER="$2"
+        shift 2
+
+        local ANNOTATION
+        while IFS= read -r ANNOTATION; do
+            for MATCH in "$@"; do
+                [[ "$ANNOTATION" != $MATCH ]] || CLEANUP_CONFIG+=( "$TYPE" "$ANNOTATION"- )
+            done
+        done < <(buildah inspect --format "{{ range \$k, \$_ := $FILTER }}{{ println \$k }}{{ end }}" "$CONTAINER")
+    }
+
+    __con_cleanup_inner --annotation '.ImageAnnotations' "org.opencontainers.image.*" "com.docker.official-images.*"
+    __con_cleanup_inner --label '.OCIv1.Config.Labels' "org.opencontainers.image.*" "com.docker.official-images.*"
 
     if [ "${#CLEANUP_CONFIG[@]}" -gt 0 ]; then
         cmd buildah config "${CLEANUP_CONFIG[@]}" "$CONTAINER"
