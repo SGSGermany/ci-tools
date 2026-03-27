@@ -33,9 +33,7 @@ patch_apply() {
             FILE="${FILE:2:-6}"
 
             echo + "patch -s -u $(quote "…/$FILE") $(quote "$DIR_INFO/$FILE.patch")" >&2
-            patch -s -u \
-                "$MOUNT/$FILE" \
-                "./$FILE.patch"
+            patch -s -u "$MOUNT/$FILE" "./$FILE.patch" || return $?
         done
     )
 }
