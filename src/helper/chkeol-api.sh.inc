@@ -81,7 +81,7 @@ chkeol_api() {
         if [ "$EOL_DATE" == "null" ]; then
             echo "$PROJECT $CYCLE is still supported"
         elif [[ ! "$CURRENT_DATE" > "$EOL_DATE" ]]; then
-            echo "$PROJECT $CYCLE is supported till $EOL_DATE"
+            echo "$PROJECT $CYCLE is supported until $EOL_DATE"
         else
             echo "$PROJECT $CYCLE should have reached its end of life on $EOL_DATE, but is still supported"
         fi
@@ -90,9 +90,9 @@ chkeol_api() {
         if [ "$EOL_DATE" == "null" ]; then
             echo "$PROJECT $CYCLE has reached its end of life"
         elif [[ "$CURRENT_DATE" > "$EOL_DATE" ]]; then
-            echo "$PROJECT $CYCLE has reached its end of life on $EOL_DATE"
+            echo "$PROJECT $CYCLE reached its end of life on $EOL_DATE"
         else
-            echo "$PROJECT $CYCLE should be supported till $EOL_DATE, but has reached its end of life already"
+            echo "$PROJECT $CYCLE should be supported until $EOL_DATE, but has already reached its end of life"
         fi
     fi
 
