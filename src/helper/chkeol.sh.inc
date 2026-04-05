@@ -13,7 +13,7 @@ chkeol_date() {
     local PROJECT="$1"
     local CYCLE="$2"
     local ENDOFLIFE_AFTER="$3"
-    local ENDOFLIFE_TRESHOLD="${4:--3 months}"
+    local ENDOFLIFE_TRESHOLD="${4:--1 month}"
 
     if ! [[ "$ENDOFLIFE_AFTER" =~ ^([1-9][0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$ ]]; then
         echo "Invalid end of life date: ${ENDOFLIFE_AFTER@Q} doesn't match 'YYYY-MM-DD' format" >&2
