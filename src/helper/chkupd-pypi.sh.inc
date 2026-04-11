@@ -109,15 +109,15 @@ chkupd_pypi_dependencies() {
 
         # get dependency list of package (without version constraints)
         echo + "readarray -t DEPENDENCIES < <(buildah run --user root $(quote "$CONTAINER") -- pip show $(quote "$PACKAGE")" \
-            "| sed -ne 's#^Requires: \(.*\)$#\1#p' | sed -e 's#,\s*#\n#g' )" >&2
+            "| sed -ne 's#^Requires: \(.*\)\$#\1#p' | sed -e 's#,\s*#\n#g' )" >&2
         readarray -t DEPENDENCIES < <(buildah run --user root "$CONTAINER" -- pip show "$PACKAGE" \
              | sed -ne 's#^Requires: \(.*\)$#\1#p' | sed -e 's#,\s*#\n#g')
 
         # read version constraints from metadata file and add everything to package list
         echo + "for DEPENDENCY in \"\${DEPENDENCIES[@]}\"; do PACKAGES+=( \"\$(awk -v pkg=\"\$DEPENDENCY\"" \
-            "-F': ' '\$0 ~ \"^Requires-Dist: \" pkg {print \$2}' $(quote "…/$METADATA"))\" ); done" >&2
+            "-F': ' '\$0 ~ \"^Requires-Dist: \" pkg {print \$2}' $(quote "…$METADATA"))\" ); done" >&2
         for DEPENDENCY in "${DEPENDENCIES[@]}"; do
-            PACKAGES+=( "$(awk -v pkg="$DEPENDENCY" -F': ' '$0 ~ "^Requires-Dist: " pkg {print $2}' "$MOUNT/$METADATA")" )
+            PACKAGES+=( "$(awk -v pkg="$DEPENDENCY" -F': ' '$0 ~ "^Requires-Dist: " pkg {print $2}' "$MOUNT$METADATA")" )
         done
     done
 
