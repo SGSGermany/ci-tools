@@ -98,27 +98,48 @@ chkupd_pypi_dependencies() {
     cmd buildah run --user root "$CONTAINER" -- \
         apk add --no-cache py3-pip@community jq >&2
 
+    # if no packages were given, check all leaf packages
+    if (( $# == 0 )); then
+        local LEAF_PACKAGES=()
+
+        echo + "readarray -t LEAF_PACKAGES < <(buildah run --user root $(quote "$CONTAINER") --" \
+            "pip list --user --not-required --format=json | jq -r '.[].name')" >&2
+        readarray -t LEAF_PACKAGES < <(buildah run --user root "$CONTAINER" -- \
+            pip list --user --not-required --format=json | jq -r '.[].name')
+
+        echo + "set -- \"\${LEAF_PACKAGES[@]}\"" >&2
+        set -- "${LEAF_PACKAGES[@]}"
+    fi
+
     # get requirements of requested packages
     local PACKAGES=() PACKAGE METADATA DEPENDENCIES=() DEPENDENCY
+
+    echo + "for PACKAGE in $(quote "$@")" >&2
     for PACKAGE in "$@"; do
         # get metadata file of package
-        echo + "METADATA=\"\$(buildah run --user root $(quote "$CONTAINER") -- pip show $(quote "$PACKAGE")" \
+        echo ++ "METADATA=\"\$(buildah run --user root $(quote "$CONTAINER") -- pip show $(quote "$PACKAGE")" \
             "| awk -F': ' '/^Name: / {n=\$2} /^Version: / {v=\$2} /^Location: / {l=\$2} END {print l \"/\" n \"-\" v \".dist-info/METADATA\"}')\"" >&2
         METADATA="$(buildah run --user root "$CONTAINER" -- pip show "$PACKAGE" \
             | awk -F': ' '/^Name: / {n=$2} /^Version: / {v=$2} /^Location: / {l=$2} END {print l "/" n "-" v ".dist-info/METADATA"}')"
 
         # get dependency list of package (without version constraints)
-        echo + "readarray -t DEPENDENCIES < <(buildah run --user root $(quote "$CONTAINER") -- pip show $(quote "$PACKAGE")" \
+        echo ++ "readarray -t DEPENDENCIES < <(buildah run --user root $(quote "$CONTAINER") -- pip show $(quote "$PACKAGE")" \
             "| sed -ne 's#^Requires: \(.*\)\$#\1#p' | sed -e 's#,\s*#\n#g' )" >&2
         readarray -t DEPENDENCIES < <(buildah run --user root "$CONTAINER" -- pip show "$PACKAGE" \
              | sed -ne 's#^Requires: \(.*\)$#\1#p' | sed -e 's#,\s*#\n#g')
 
         # read version constraints from metadata file and add everything to package list
-        echo + "for DEPENDENCY in \"\${DEPENDENCIES[@]}\"; do PACKAGES+=( \"\$(awk -v pkg=\"\$DEPENDENCY\"" \
-            "-F': ' '\$0 ~ \"^Requires-Dist: \" pkg {print \$2}' $(quote "…$METADATA"))\" ); done" >&2
+        echo ++ "for DEPENDENCY in $(quote "${DEPENDENCIES[@]}")" >&2
         for DEPENDENCY in "${DEPENDENCIES[@]}"; do
-            PACKAGES+=( "$(awk -v pkg="$DEPENDENCY" -F': ' '$0 ~ "^Requires-Dist: " pkg {print $2}' "$MOUNT$METADATA")" )
+            echo +++ "PACKAGES+=( \"\$(awk -v pkg=$(quote "$DEPENDENCY") -F': '" \
+                "'\$0 ~ \"^Requires-Dist: \" pkg {print \$2}' $(quote "…$METADATA"))\" )"
+            PACKAGES+=( "$(awk -v pkg="$DEPENDENCY" -F': ' \
+                '$0 ~ "^Requires-Dist: " pkg {print $2}' "$MOUNT$METADATA")" )
         done
+
+        # include the package as well
+        echo ++ "PACKAGES+=( $(quote "$PACKAGE") )" >&2
+        PACKAGES+=( "$PACKAGE" )
     done
 
     # check for PyPi package upgrades
