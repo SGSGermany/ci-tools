@@ -9,12 +9,6 @@
 # SPDX-License-Identifier: MIT
 # License-Filename: LICENSE
 
-[ -x "$(type -P curl 2>/dev/null)" ] \
-    || { echo "Missing CI tools script dependency: curl" >&2; exit 1; }
-
-[ -x "$(type -P jq 2>/dev/null)" ] \
-    || { echo "Missing CI tools script dependency: jq" >&2; exit 1; }
-
 github_latest() {
     local GITHUB_REPO_IDENT="$1"
 

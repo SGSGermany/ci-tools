@@ -12,9 +12,6 @@
 source "$(dirname "${BASH_SOURCE[0]}")/common-traps.sh.inc"
 source "$(dirname "${BASH_SOURCE[0]}")/gpg.sh.inc"
 
-[ -x "$(type -P curl 2>/dev/null)" ] \
-    || { echo "Missing CI tools script dependency: curl" >&2; exit 1; }
-
 __PIE_PHAR="https://github.com/php/pie/releases/latest/download/pie.phar"
 
 __COMPOSER_PHAR="https://getcomposer.org/download/%s/composer.phar"
