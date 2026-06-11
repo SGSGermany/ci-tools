@@ -12,6 +12,12 @@
 [ -x "$(type -P rsync 2>/dev/null)" ] \
     || { echo "Missing CI tools script dependency: rsync" >&2; exit 1; }
 
+[ -x "$(type -P curl 2>/dev/null)" ] \
+    || { echo "Missing CI tools script dependency: curl" >&2; exit 1; }
+
+[ -x "$(type -P jq 2>/dev/null)" ] \
+    || { echo "Missing CI tools script dependency: jq" >&2; exit 1; }
+
 quote() {
     local QUOTED=""
     for ARG in "$@"; do
