@@ -172,3 +172,52 @@ chkupd_image_env_vars() {
         fi
     done < <(printf '%s\n' "$@")
 }
+
+chkupd_image_age() {
+    local IMAGE="$1"
+    local TAG="$2"
+    local RELATIVE_AGE="$3"
+
+    # pull current image
+    echo + "IMAGE_ID=\"\$(podman pull $(quote "$IMAGE:$TAG"))\"" >&2
+    local IMAGE_ID="$(podman pull "$IMAGE:$TAG" || true)"
+
+    if [ -z "$IMAGE_ID" ]; then
+        echo "Failed to pull image '$IMAGE:$TAG': No image with this tag found" >&2
+        echo "Image rebuild required" >&2
+        echo "build"
+        return 1
+    fi
+
+    # check whether image is older than the maximum age given
+    # Note: Go uses the magic date '2006-01-02 15:04:05.999999999 -07:00' as reference for date formatting
+    echo + "CREATED=\"\$(podman image inspect --format '{{.Created.Format "2006-01-02T15:04:05-07:00"}}' $IMAGE_ID)\"" >&2
+    local CREATED="$(podman image inspect --format '{{.Created.Format "2006-01-02T15:04:05-07:00"}}' "$IMAGE_ID" || true)"
+
+    if [ -z "$CREATED" ]; then
+        echo "Failed to inspect image '$IMAGE:$TAG': The image specifies no creation date" >&2
+        echo "Image rebuild required" >&2
+        echo "build"
+        return 1
+    fi
+
+    echo + "REBUILD_AFTER=\"\$(date --date=$(quote "$CREATED $RELATIVE_AGE") +'%s')\"" >&2
+    local REBUILD_AFTER="$(date --date="$CREATED $RELATIVE_AGE" +'%s' || true)"
+
+    if [ -z "$REBUILD_AFTER" ]; then
+        echo "Failed to inspect image '$IMAGE:$TAG': The calculated maximum image age is invalid: $CREATED $RELATIVE_AGE" >&2
+        echo "Image rebuild required" >&2
+        echo "build"
+        return 1
+    fi
+
+    echo + "[[ $(quote "$(date --date="@$REBUILD_AFTER" +'%F %T')") < $(quote "$(date +'%F %T')") ]]" >&2
+    if [[ "$REBUILD_AFTER" < "$(date +'%s')" ]]; then
+        echo "Image reached its end of life as of $(date +'%F %T')" >&2
+        echo "Image creation date: $(date --date="$CREATED" +'%F %T')" >&2
+        echo "Image rebuild required after: $(date --date="@$REBUILD_AFTER" +'%F %T')" >&2
+        echo "Image rebuild required" >&2
+        echo "build"
+        return 1
+    fi
+}
